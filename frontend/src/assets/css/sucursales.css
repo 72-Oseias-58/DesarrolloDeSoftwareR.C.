@@ -1,0 +1,20 @@
+.sucursales-page {
+  width: 100%;
+}
+
+.sucursales-form-card,
+.sucursales-table-card {
+  border-radius: 14px;
+}
+
+.sucursales-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.sucursales-dialog-card {
+  width: 460px;
+  max-width: 95vw;
+  border-radius: 16px;
+}

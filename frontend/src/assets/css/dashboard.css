@@ -1,0 +1,253 @@
+/* =========================
+   DASHBOARD GENERAL
+========================= */
+
+.dashboard-page {
+  min-height: 100vh;
+  background: #fff5e5;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.dashboard-page-dark {
+  background: #1f1f1f;
+  color: #ffffff;
+}
+
+.dashboard-page-dark .text-dark {
+  color: #ffffff !important;
+}
+
+.dashboard-page-dark .text-grey-7 {
+  color: #cfcfcf !important;
+}
+
+.dashboard-card {
+  height: 100%;
+  border-radius: 18px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.25s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(63, 31, 27, 0.14);
+}
+
+.dashboard-page-dark .dashboard-card {
+  background: #2b2b2b;
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+}
+/* =========================
+   MAIN LAYOUT
+========================= */
+
+.main-layout {
+  min-height: 100vh;
+  background: #fff5e5;
+}
+
+.main-header {
+  background: linear-gradient(135deg, #d92243, #f69d39);
+  color: white;
+}
+
+.system-title {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.system-subtitle {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.user-info {
+  text-align: right;
+  margin-right: 12px;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.user-role {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.main-drawer {
+  background: #fffaf0;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+}
+
+.drawer-logo {
+  width: 45px;
+  height: 45px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #d92243, #f69d39);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.drawer-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #3b2a1a;
+}
+
+.drawer-role {
+  font-size: 12px;
+  color: #8a6a4a;
+}
+
+.main-page {
+  padding: 24px;
+  background: #fff5e5;
+  min-height: calc(100vh - 50px);
+}
+
+.menu-active {
+  background: rgba(217, 34, 67, 0.12);
+  color: #d92243;
+  font-weight: 700;
+  border-radius: 12px;
+}
+
+.body--dark .main-layout,
+.body--dark .main-page {
+  background: #121212;
+}
+
+.body--dark .main-drawer {
+  background: #1e1e1e;
+}
+
+.body--dark .drawer-title {
+  color: #ffffff;
+}
+
+.body--dark .drawer-role {
+  color: #cfcfcf;
+}
+/* =========================
+   MODULE PAGES
+========================= */
+
+.module-page {
+  animation: fadeInUp 0.25s ease;
+}
+
+.module-card {
+  border-radius: 18px;
+  padding: 8px;
+  background: #ffffff;
+}
+
+.body--dark .module-card {
+  background: #2b2b2b;
+  color: #ffffff;
+}
+
+.body--dark .module-card .text-grey-7 {
+  color: #cfcfcf !important;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* PANEL SUPERADMIN */
+.superadmin-page {
+  animation: fadeUp 0.35s ease;
+}
+
+.superadmin-hero {
+  min-height: 120px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #d92243, #f69d39);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  position: relative;
+  padding: 26px 36px;
+  box-shadow: 0 18px 40px rgba(217, 34, 67, 0.25);
+}
+
+.superadmin-hero::after {
+  content: "";
+  position: absolute;
+  right: -80px;
+  top: -80px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.hero-icon {
+  opacity: 0.25;
+  z-index: 1;
+}
+
+.hero-title {
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.hero-subtitle {
+  font-size: 15px;
+  opacity: 0.92;
+}
+
+.stat-card,
+.action-card {
+  border-radius: 22px;
+  transition: 0.25s ease;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+}
+
+.stat-card:hover,
+.action-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.12);
+}
+
+.action-card {
+  cursor: pointer;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
