@@ -42,7 +42,7 @@ return new class extends Migration
             | Datos laborales
             |--------------------------------------------------------------------------
             */
-
+            $table->string('nombre', 100);
             $table->string('cargo', 50);
 
             $table->enum('estado', [

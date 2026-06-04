@@ -10,14 +10,16 @@ class Empleado extends Model
     protected $primaryKey = 'id_empleado';
 
     protected $fillable = [
-        'id_user',
-        'id_sucursal',
-        'cargo',
-        'fecha_nacimiento',
-        'telefono',
-        'contacto_referencia',
-        'telefono_referencia',
-    ];
+    'id_user',
+    'id_sucursal',
+    'nombre',
+    'cargo',
+    'estado',
+    'fecha_nacimiento',
+    'telefono',
+    'contacto_referencia',
+    'telefono_referencia',
+];
 
     public function usuario()
     {

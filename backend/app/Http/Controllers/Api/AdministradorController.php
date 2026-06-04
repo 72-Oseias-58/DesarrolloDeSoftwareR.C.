@@ -51,6 +51,7 @@ class AdministradorController extends Controller
             Empleado::create([
                 'id_user' => $user->id,
                 'id_sucursal' => $request->id_sucursal,
+                'nombre' => $request->name,
                 'cargo' => 'ADMIN',
                 'estado' => 'ACTIVO',
                 'fecha_nacimiento' => $request->fecha_nacimiento,
@@ -89,7 +90,9 @@ class AdministradorController extends Controller
 
     public function update(Request $request, $id)
     {
-        $administrador = User::where('id_rol', 2)->findOrFail($id);
+        $administrador = User::with('empleado')
+            ->where('id_rol', 2)
+            ->findOrFail($id);
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -120,6 +123,7 @@ class AdministradorController extends Controller
                 ['id_user' => $administrador->id],
                 [
                     'id_sucursal' => $request->id_sucursal,
+                    'nombre' => $request->name,
                     'cargo' => 'ADMIN',
                     'estado' => $administrador->empleado->estado ?? 'ACTIVO',
                     'fecha_nacimiento' => $request->fecha_nacimiento,

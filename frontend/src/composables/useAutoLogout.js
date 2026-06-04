@@ -9,7 +9,7 @@ export function useAutoLogout() {
   const authStore = useAuthStore()
 
   
-  const TIEMPO_INACTIVIDAD = 5 * 1000
+  const TIEMPO_INACTIVIDAD = 60 * 1000
 
   let temporizador = null
 
@@ -22,13 +22,10 @@ export function useAutoLogout() {
       position: 'top',
       timeout: 3000
     })
-
     router.push('/login')
   }
-
   const reiniciarTemporizador = () => {
     clearTimeout(temporizador)
-
     temporizador = setTimeout(() => {
       cerrarPorInactividad()
     }, TIEMPO_INACTIVIDAD)
