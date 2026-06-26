@@ -30,4 +30,21 @@ class Empleado extends Model
     {
         return $this->belongsTo(Sucursal::class, 'id_sucursal', 'id_sucursal');
     }
+    public function cajas()
+{
+    return $this->hasMany(
+        Caja::class,
+        'id_empleado',
+        'id_empleado'
+    );
+}
+
+public function pedidosComoCajero()
+{
+    return $this->hasMany(
+        Pedido::class,
+        'id_cajero',
+        'id_empleado'
+    );
+}
 }

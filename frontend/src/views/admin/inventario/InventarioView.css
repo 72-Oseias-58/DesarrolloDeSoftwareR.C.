@@ -1,0 +1,20 @@
+.inventario-page {
+  padding: 24px;
+}
+
+.inventario-card {
+  border-radius: 22px;
+}
+
+.inventario-mini-card {
+  height: 100%;
+  border-radius: 18px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.inventario-mini-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}

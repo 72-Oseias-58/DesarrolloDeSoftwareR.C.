@@ -1,0 +1,64 @@
+.permisos-usuario-page {
+  width: 100%;
+}
+
+.permisos-usuario-header {
+  gap: 16px;
+}
+
+.permisos-usuario-resumen,
+.permisos-usuario-card {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.permisos-usuario-modulo {
+  width: 260px;
+  vertical-align: top;
+  background: rgba(217, 34, 67, 0.05);
+}
+
+.permisos-usuario-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.permisos-usuario-acciones {
+  padding: 16px;
+}
+
+:deep(.q-table thead tr) {
+  background: rgba(217, 34, 67, 0.08);
+}
+
+:deep(.q-table th) {
+  font-weight: 700;
+}
+
+:deep(.q-checkbox__label) {
+  line-height: 1.35;
+}
+
+@media (max-width: 700px) {
+  .permisos-usuario-page {
+    padding: 12px;
+  }
+
+  .permisos-usuario-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .permisos-usuario-header .q-btn {
+    width: 100%;
+  }
+
+  .permisos-usuario-modulo {
+    width: auto;
+  }
+
+  .permisos-usuario-acciones {
+    flex-wrap: wrap;
+  }
+}

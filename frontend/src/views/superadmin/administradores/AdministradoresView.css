@@ -1,0 +1,72 @@
+.administradores-page {
+  width: 100%;
+}
+
+.administradores-header {
+  gap: 16px;
+}
+
+.administradores-card {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.administradores-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.administradores-dialog-card {
+  width: 650px;
+  max-width: 95vw;
+  border-radius: 18px;
+}
+
+.administradores-detalle-card {
+  width: 600px;
+  max-width: 95vw;
+  border-radius: 18px;
+}
+
+.administradores-detalle-contenido {
+  display: grid;
+  gap: 8px;
+}
+
+.administradores-detalle-contenido p {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.035);
+}
+
+:deep(.q-table thead tr) {
+  background: rgba(217, 34, 67, 0.08);
+}
+
+:deep(.q-table th) {
+  font-weight: 700;
+}
+
+:deep(.q-tab-panel) {
+  min-height: 250px;
+}
+
+@media (max-width: 700px) {
+  .administradores-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .administradores-header .q-btn {
+    width: 100%;
+  }
+
+  .administradores-dialog-card,
+  .administradores-detalle-card {
+    width: calc(100vw - 24px);
+  }
+}

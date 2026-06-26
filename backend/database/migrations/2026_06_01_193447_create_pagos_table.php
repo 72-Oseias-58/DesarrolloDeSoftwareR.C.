@@ -14,12 +14,19 @@ return new class extends Migration
             $table->unsignedInteger('id_pedido');
             $table->unsignedBigInteger('id_user_crea');
 
-            $table->string('metodo_pago', 50)->nullable();
-            $table->decimal('monto', 10, 2)->nullable();
-            $table->dateTime('fecha')->nullable();
+            $table->decimal('monto_efectivo', 10, 2)->default(0);
+            $table->decimal('monto_qr', 10, 2)->default(0);
+            $table->decimal('total_pagado', 10, 2);
+            $table->dateTime('fecha');
 
-            $table->dateTime('created_at')->nullable()->useCurrent();
-            $table->dateTime('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
+            $table->dateTime('created_at')
+                ->nullable()
+                ->useCurrent();
+
+            $table->dateTime('updated_at')
+                ->nullable()
+                ->useCurrent()
+                ->useCurrentOnUpdate();
 
             $table->foreign('id_pedido')
                 ->references('id_pedido')
@@ -32,6 +39,8 @@ return new class extends Migration
                 ->on('users')
                 ->onUpdate('cascade')
                 ->onDelete('restrict');
+
+            $table->unique('id_pedido');
         });
     }
 

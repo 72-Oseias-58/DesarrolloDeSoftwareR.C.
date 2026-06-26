@@ -1,0 +1,26 @@
+.empleados-page {
+  width: 100%;
+}
+
+.empleados-card {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.empleados-page :deep(.q-table th) {
+  font-weight: 700;
+  color: #4b3a2f;
+  background: #fff5e5;
+}
+
+.empleados-page :deep(.q-table tbody tr:hover) {
+  background: rgba(246, 157, 57, 0.08);
+}
+
+.empleados-page :deep(.q-card) {
+  border-radius: 18px;
+}
+
+.empleados-page :deep(.q-dialog .q-card) {
+  border-radius: 20px;
+}

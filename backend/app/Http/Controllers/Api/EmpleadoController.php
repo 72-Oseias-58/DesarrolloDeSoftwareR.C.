@@ -4,18 +4,37 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Empleado;
+use App\Models\PermisoUser;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class EmpleadoController extends Controller
 {
+    private function normalizarTexto(?string $texto): string
+    {
+        return strtoupper(trim($texto ?? ''));
+    }
+
+    private function esCargoCajero(?string $cargo): bool
+    {
+        return str_contains($this->normalizarTexto($cargo), 'CAJERO');
+    }
+
     private function sucursalDelAdmin()
     {
-        $admin = auth()->user()->load('empleado');
+        $authUser = Auth::guard('api')->user();
 
-        if (!$admin->empleado) {
+        if (!$authUser) {
+            abort(401, 'Usuario no autenticado.');
+        }
+
+        $admin = User::with('empleado')->find($authUser->id);
+
+        if (!$admin || !$admin->empleado) {
             abort(403, 'El administrador no tiene sucursal asignada.');
         }
 
@@ -33,13 +52,14 @@ class EmpleadoController extends Controller
             ->get();
 
         return response()->json([
-            'empleados' => $empleados
+            'empleados' => $empleados,
         ]);
     }
 
     public function store(Request $request)
     {
         $idSucursalAdmin = $this->sucursalDelAdmin();
+        $esCajero = $this->esCargoCajero($request->cargo);
 
         $request->validate([
             'nombre' => 'required|string|max:255',
@@ -49,9 +69,22 @@ class EmpleadoController extends Controller
             'contacto_referencia' => 'nullable|string|max:100',
             'telefono_referencia' => 'nullable|string|max:30',
 
-            'usuario' => 'nullable|string|max:255|unique:users,usuario',
-            'email' => 'nullable|email|unique:users,email',
-            'password' => 'nullable|string|min:6',
+            'usuario' => [
+                $esCajero ? 'required' : 'nullable',
+                'string',
+                'max:255',
+                Rule::unique('users', 'usuario'),
+            ],
+            'email' => [
+                'nullable',
+                'email',
+                Rule::unique('users', 'email'),
+            ],
+            'password' => [
+                $esCajero ? 'required' : 'nullable',
+                'string',
+                'min:6',
+            ],
         ]);
 
         DB::beginTransaction();
@@ -59,18 +92,13 @@ class EmpleadoController extends Controller
         try {
             $user = null;
 
-            if ($request->cargo === 'CAJERO') {
-                $request->validate([
-                    'usuario' => 'required|string|max:255|unique:users,usuario',
-                    'password' => 'required|string|min:6',
-                ]);
-
+            if ($esCajero) {
                 $user = User::create([
                     'name' => $request->nombre,
                     'usuario' => $request->usuario,
                     'email' => $request->email,
                     'password' => Hash::make($request->password),
-                    'id_rol' => 3,
+                    'id_rol' => 3, // CAJERO
                 ]);
             }
 
@@ -78,7 +106,7 @@ class EmpleadoController extends Controller
                 'id_user' => $user?->id,
                 'id_sucursal' => $idSucursalAdmin,
                 'nombre' => $request->nombre,
-                'cargo' => $request->cargo,
+                'cargo' => $this->normalizarTexto($request->cargo),
                 'estado' => 'ACTIVO',
                 'fecha_nacimiento' => $request->fecha_nacimiento,
                 'telefono' => $request->telefono,
@@ -90,15 +118,14 @@ class EmpleadoController extends Controller
 
             return response()->json([
                 'message' => 'Empleado creado correctamente',
-                'empleado' => $empleado->load(['usuario.rol', 'sucursal'])
+                'empleado' => $empleado->load(['usuario.rol', 'sucursal']),
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
             return response()->json([
                 'message' => 'Error al crear empleado',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -113,7 +140,7 @@ class EmpleadoController extends Controller
             ->findOrFail($id);
 
         return response()->json([
-            'empleado' => $empleado
+            'empleado' => $empleado,
         ]);
     }
 
@@ -126,6 +153,8 @@ class EmpleadoController extends Controller
             ->where('cargo', '!=', 'ADMIN')
             ->findOrFail($id);
 
+        $esCajero = $this->esCargoCajero($request->cargo);
+
         $request->validate([
             'nombre' => 'required|string|max:255',
             'cargo' => 'required|string|max:50',
@@ -134,29 +163,71 @@ class EmpleadoController extends Controller
             'contacto_referencia' => 'nullable|string|max:100',
             'telefono_referencia' => 'nullable|string|max:30',
 
-            'usuario' => 'nullable|string|max:255|unique:users,usuario,' . $empleado->id_user,
-            'email' => 'nullable|email|unique:users,email,' . $empleado->id_user,
-            'password' => 'nullable|string|min:6',
+            'usuario' => [
+                $esCajero ? 'required' : 'nullable',
+                'string',
+                'max:255',
+                Rule::unique('users', 'usuario')->ignore($empleado->id_user),
+            ],
+            'email' => [
+                'nullable',
+                'email',
+                Rule::unique('users', 'email')->ignore($empleado->id_user),
+            ],
+            'password' => [
+                $esCajero && !$empleado->id_user ? 'required' : 'nullable',
+                'string',
+                'min:6',
+            ],
         ]);
 
         DB::beginTransaction();
 
         try {
-            if ($empleado->usuario) {
-                $empleado->usuario->name = $request->nombre;
-                $empleado->usuario->usuario = $request->usuario;
-                $empleado->usuario->email = $request->email;
+            if ($esCajero) {
+                if ($empleado->usuario) {
+                    $empleado->usuario->update([
+                        'name' => $request->nombre,
+                        'usuario' => $request->usuario,
+                        'email' => $request->email,
+                        'id_rol' => 3, // CAJERO
+                    ]);
 
-                if ($request->filled('password')) {
-                    $empleado->usuario->password = Hash::make($request->password);
+                    if ($request->filled('password')) {
+                        $empleado->usuario->update([
+                            'password' => Hash::make($request->password),
+                        ]);
+                    }
+                } else {
+                    $user = User::create([
+                        'name' => $request->nombre,
+                        'usuario' => $request->usuario,
+                        'email' => $request->email,
+                        'password' => Hash::make($request->password),
+                        'id_rol' => 3, // CAJERO
+                    ]);
+
+                    $empleado->id_user = $user->id;
+                    $empleado->save();
                 }
+            }
 
-                $empleado->usuario->save();
+            if (!$esCajero) {
+                if ($empleado->usuario) {
+                    PermisoUser::where('id_user', $empleado->usuario->id)->delete();
+
+                    $usuarioAnterior = $empleado->usuario;
+
+                    $empleado->id_user = null;
+                    $empleado->save();
+
+                    $usuarioAnterior->delete();
+                }
             }
 
             $empleado->update([
                 'nombre' => $request->nombre,
-                'cargo' => $request->cargo,
+                'cargo' => $this->normalizarTexto($request->cargo),
                 'fecha_nacimiento' => $request->fecha_nacimiento,
                 'telefono' => $request->telefono,
                 'contacto_referencia' => $request->contacto_referencia,
@@ -167,15 +238,14 @@ class EmpleadoController extends Controller
 
             return response()->json([
                 'message' => 'Empleado actualizado correctamente',
-                'empleado' => $empleado->load(['usuario.rol', 'sucursal'])
+                'empleado' => $empleado->load(['usuario.rol', 'sucursal']),
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
             return response()->json([
                 'message' => 'Error al actualizar empleado',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -196,8 +266,7 @@ class EmpleadoController extends Controller
 
         return response()->json([
             'message' => 'Estado actualizado correctamente',
-            'estado' => $empleado->estado
+            'estado' => $empleado->estado,
         ]);
     }
 }
-// cajero

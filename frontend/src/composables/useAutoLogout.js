@@ -2,6 +2,7 @@ import { onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from '@/stores/auth'
+// solo se que no se nada XDXD
 
 export function useAutoLogout() {
   const router = useRouter()

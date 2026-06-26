@@ -1,0 +1,20 @@
+.reportes-page {
+  padding: 24px;
+}
+
+.reportes-card {
+  border-radius: 22px;
+}
+
+.reporte-mini-card {
+  height: 100%;
+  border-radius: 18px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.reporte-mini-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}

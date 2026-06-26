@@ -1,0 +1,57 @@
+.jornadas-page {
+  padding: 24px;
+}
+
+.admin-module-card {
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.admin-option-card {
+  height: 100%;
+  border-radius: 18px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.admin-option-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.jornada-detalle-card,
+.jornada-historial-card {
+  border-radius: 18px;
+}
+
+.detalle-label {
+  color: #777;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.detalle-value {
+  margin-top: 4px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.jornadas-loading {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.jornadas-page :deep(.q-table th) {
+  font-weight: 700;
+  color: #4b3a2f;
+  background: #fff5e5;
+}
+
+.jornadas-page :deep(.q-table tbody tr:hover) {
+  background: rgba(246, 157, 57, 0.08);
+}

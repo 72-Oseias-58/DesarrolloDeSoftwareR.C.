@@ -1,0 +1,21 @@
+.cajero-module-page {
+  width: 100%;
+}
+
+.cajero-module-card {
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.cajero-option-card {
+  height: 100%;
+  border-radius: 18px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.cajero-option-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}

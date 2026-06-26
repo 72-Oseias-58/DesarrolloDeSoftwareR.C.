@@ -1,0 +1,40 @@
+.superadmin-page {
+  width: 100%;
+}
+
+.superadmin-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(217, 34, 67, 0.96),
+      rgba(246, 157, 57, 0.9)
+    );
+  color: white;
+}
+
+.hero-icon {
+  opacity: 0.85;
+}
+
+.filtros-card,
+.stat-card {
+  border-radius: 16px;
+}
+
+.stat-card {
+  height: 100%;
+}
+
+@media (max-width: 600px) {
+  .superadmin-hero {
+    align-items: flex-start;
+  }
+
+  .hero-icon {
+    display: none;
+  }
+}

@@ -15,7 +15,7 @@
           id="usuario"
           v-model.trim="form.usuario"
           type="text"
-          placeholder="Ej: jhonatan"
+          placeholder="Ej: maximiliano"
           autocomplete="username"
           :disabled="cargando"
           @focus="emit('focus-usuario')"
@@ -95,6 +95,7 @@ const alternarPassword = () => {
   mostrarPassword.value = !mostrarPassword.value
   emit('toggle-password')
 }
+
 const iniciarSesion = async () => {
   error.value = ''
 
@@ -108,10 +109,16 @@ const iniciarSesion = async () => {
   emit('login-loading')
 
   try {
-    await authStore.login({
+    const resultado = await authStore.login({
       usuario: form.usuario,
       password: form.password,
     })
+
+    if (!resultado?.ok) {
+      error.value = resultado?.message || 'Usuario o contraseña incorrectos.'
+      emit('login-error')
+      return
+    }
   } catch (e) {
     emit('login-error')
 
@@ -119,11 +126,11 @@ const iniciarSesion = async () => {
       error.value = 'Usuario o contraseña incorrectos.'
     } else if (e.response?.data?.message) {
       error.value = e.response.data.message
-    }  else if (e.message) {
-  error.value = e.message
-} else {
-  error.value = 'No se pudo conectar con el servidor.'
-}
+    } else if (e.message) {
+      error.value = e.message
+    } else {
+      error.value = 'No se pudo conectar con el servidor.'
+    }
   } finally {
     cargando.value = false
 

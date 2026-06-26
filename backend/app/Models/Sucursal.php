@@ -16,4 +16,30 @@ class Sucursal extends Model
         'telefono',
         'estado',
     ];
+    public function empleados()
+{
+    return $this->hasMany(
+        Empleado::class,
+        'id_sucursal',
+        'id_sucursal'
+    );
+}
+
+public function jornadas()
+{
+    return $this->hasMany(
+        Jornada::class,
+        'id_sucursal',
+        'id_sucursal'
+    );
+}
+
+public function pedidos()
+{
+    return $this->hasMany(
+        Pedido::class,
+        'id_sucursal',
+        'id_sucursal'
+    );
+}
 }

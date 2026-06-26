@@ -3,7 +3,13 @@ import './assets/css/main.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
-import { Quasar, Notify, Dark } from 'quasar'
+import {
+  Quasar,
+  Notify,
+  Dark,
+  Dialog,
+} from 'quasar'
+
 import '@quasar/extras/material-icons/material-icons.css'
 import 'quasar/src/css/index.sass'
 
@@ -19,7 +25,9 @@ app.use(Quasar, {
   plugins: {
     Notify,
     Dark,
+    Dialog,
   },
+
   config: {
     brand: {
       primary: '#D92243',
@@ -27,6 +35,7 @@ app.use(Quasar, {
       accent: '#E0C375',
       dark: '#3F1F1B',
     },
+
     notify: {
       position: 'top-right',
       timeout: 2500,

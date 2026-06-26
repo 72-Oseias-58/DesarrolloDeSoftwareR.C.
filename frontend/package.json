@@ -14,11 +14,15 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.18.0",
+    "apexcharts": "^5.15.0",
     "axios": "^1.15.2",
+    "laravel-echo": "^2.3.7",
     "pinia": "^3.0.4",
+    "pusher-js": "^8.5.0",
     "quasar": "^2.19.3",
     "vue": "^3.5.32",
-    "vue-router": "^5.0.4"
+    "vue-router": "^5.0.4",
+    "vue3-apexcharts": "^1.11.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

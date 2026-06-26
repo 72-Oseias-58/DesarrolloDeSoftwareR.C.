@@ -17,8 +17,17 @@ return new class extends Migration
             $table->time('hora_inicio')->nullable();
             $table->time('hora_fin')->nullable();
 
-            $table->dateTime('created_at')->nullable()->useCurrent();
-            $table->dateTime('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
+            $table->enum('estado', ['ABIERTA', 'CERRADA'])
+                ->default('ABIERTA');
+
+            $table->dateTime('created_at')
+                ->nullable()
+                ->useCurrent();
+
+            $table->dateTime('updated_at')
+                ->nullable()
+                ->useCurrent()
+                ->useCurrentOnUpdate();
 
             $table->foreign('id_sucursal')
                 ->references('id_sucursal')

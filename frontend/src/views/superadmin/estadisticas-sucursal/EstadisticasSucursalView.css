@@ -1,0 +1,34 @@
+.estadisticas-sucursal-page {
+  width: 100%;
+}
+
+.estadisticas-sucursal-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 22px;
+  color: white;
+  background: linear-gradient(
+    135deg,
+    #d92243,
+    #f69d39
+  );
+}
+
+.estadisticas-sucursal-hero-icon {
+  opacity: 0.85;
+}
+
+.estadisticas-sucursal-filtros {
+  border-radius: 16px;
+}
+
+@media (max-width: 600px) {
+  .estadisticas-sucursal-hero {
+    align-items: flex-start;
+  }
+
+  .estadisticas-sucursal-hero-icon {
+    display: none;
+  }
+}

@@ -1,0 +1,108 @@
+.nuevo-pedido-page {
+  padding: 24px;
+}
+
+.nuevo-pedido-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.producto-card {
+  height: 100%;
+  border-radius: 12px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.producto-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+}
+
+.producto-descripcion {
+  min-height: 42px;
+  margin-top: 4px;
+  color: #777;
+  line-height: 1.4;
+}
+
+.producto-precio {
+  color: #d92243;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.estado-catalogo,
+.pedido-vacio {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.pedido-card {
+  position: sticky;
+  top: 76px;
+}
+
+.detalle-card {
+  border-radius: 12px;
+}
+
+.cantidad-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cantidad-valor {
+  min-width: 36px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.subtotal {
+  margin-left: auto;
+  color: #d92243;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.guarniciones-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pedido-total {
+  color: #d92243;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+@media (max-width: 1023px) {
+  .pedido-card {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .nuevo-pedido-page {
+    padding: 16px;
+  }
+
+  .nuevo-pedido-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .producto-descripcion {
+    min-height: auto;
+  }
+}

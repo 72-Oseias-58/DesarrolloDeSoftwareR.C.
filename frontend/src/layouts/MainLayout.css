@@ -1,0 +1,118 @@
+.main-layout {
+  min-height: 100vh;
+}
+
+.main-header {
+  background: linear-gradient(135deg, #d92243, #f69d39);
+}
+
+.system-title {
+  font-weight: 700;
+}
+
+.user-info {
+  text-align: right;
+  margin-right: 16px;
+}
+
+.user-name {
+  font-weight: 700;
+}
+
+.user-role {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.main-drawer {
+  background: var(--q-dark-page);
+}
+
+.drawer-header {
+  min-height: 89px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 16px;
+  overflow: hidden;
+  transition: padding 0.2s ease;
+}
+
+.drawer-header--mini {
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.drawer-logo {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #d92243, #f69d39);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.drawer-identity {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.drawer-title {
+  font-weight: 700;
+}
+
+.drawer-role {
+  color: #777;
+  font-size: 12px;
+}
+
+.drawer-item {
+  min-height: 58px;
+  margin: 4px 8px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.drawer-item-icon {
+  min-width: 40px;
+}
+
+.main-drawer.q-drawer--mini .drawer-item {
+  width: 60px;
+  min-height: 56px;
+  margin: 4px auto;
+  padding: 0;
+  justify-content: center;
+}
+
+.main-drawer.q-drawer--mini .drawer-item-icon {
+  min-width: 0;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-drawer.q-drawer--mini .drawer-item-icon :deep(.q-icon) {
+  font-size: 25px;
+}
+
+.menu-active {
+  color: #d92243;
+  background: rgba(217, 34, 67, 0.1);
+  border-radius: 10px;
+}
+
+.main-page {
+  min-height: calc(100vh - 50px);
+}
+
+@media (max-width: 1023px) {
+  .user-info {
+    display: none;
+  }
+}
