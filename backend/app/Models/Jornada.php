@@ -48,4 +48,14 @@ class Jornada extends Model
             'id_jornada'
         );
     }
+
+    public function controlCarne()
+{
+    return $this->hasMany(
+        ControlCarneJornada::class,
+        'id_jornada',
+        'id_jornada'
+    );
+}
+    
 }

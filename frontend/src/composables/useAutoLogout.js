@@ -10,7 +10,7 @@ export function useAutoLogout() {
   const authStore = useAuthStore()
 
   
-  const TIEMPO_INACTIVIDAD = 60 * 1000
+  const TIEMPO_INACTIVIDAD = 2 * 60 * 1000;
 
   let temporizador = null
 

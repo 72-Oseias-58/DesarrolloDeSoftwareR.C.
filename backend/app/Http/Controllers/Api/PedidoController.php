@@ -18,9 +18,8 @@ class PedidoController extends Controller
     ) {
     }
 
-    public function store(
-        StorePedidoRequest $request
-    ): JsonResponse {
+    public function store(StorePedidoRequest $request): JsonResponse
+    {
         $pedido = $this->pedidoService->crear(
             auth('api')->user(),
             $request->validated()
@@ -39,8 +38,7 @@ class PedidoController extends Controller
 
         if (!$empleado) {
             return response()->json([
-                'message' =>
-                    'El usuario no está asociado a un empleado.',
+                'message' => 'El usuario no está asociado a un empleado.',
             ], 422);
         }
 

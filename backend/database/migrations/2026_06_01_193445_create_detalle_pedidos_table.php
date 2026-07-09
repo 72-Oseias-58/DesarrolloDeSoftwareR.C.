@@ -12,12 +12,24 @@ return new class extends Migration
             $table->increments('id_detalle');
 
             $table->unsignedInteger('id_pedido');
-            $table->unsignedInteger('id_producto');
+
+            // Nullable porque la venta manual de pura carne no depende de un producto fijo.
+            $table->unsignedInteger('id_producto')->nullable();
 
             $table->integer('cantidad')->nullable();
             $table->decimal('precio_unitario', 10, 2)->nullable();
             $table->decimal('subtotal', 10, 2)->nullable();
             $table->string('observacion', 255)->nullable();
+
+            // Consumo real de producción descontado por este detalle.
+            $table->decimal('consumo_chancho_total', 10, 2)->default(0);
+            $table->decimal('consumo_pollo_total', 10, 2)->default(0);
+
+            // Venta manual de pura carne.
+            $table->boolean('es_pura_carne')->default(false);
+            $table->string('tipo_carne_manual', 50)->nullable();
+            $table->decimal('cantidad_carne_manual', 10, 2)->nullable();
+            $table->string('unidad_carne_manual', 50)->nullable();
 
             $table->dateTime('created_at')->nullable()->useCurrent();
             $table->dateTime('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();

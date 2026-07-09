@@ -7,27 +7,26 @@ import LoginView from '../views/auth/LoginView.vue'
 
 import MainLayout from '../layouts/MainLayout.vue'
 
-// DASHBOARDS
 import SuperAdminDashboard from '../views/dashboard/superadmin/SuperAdminDashboard.vue'
 import AdminDashboard from '../views/dashboard/admin/AdminDashboard.vue'
 import CajeroDashboard from '../views/dashboard/cajero/CajeroDashboard.vue'
 
-// ADMIN
 import InventarioView from '../views/admin/inventario/InventarioView.vue'
 import EmpleadosView from '../views/admin/empleados/EmpleadosView.vue'
 import ReportesView from '../views/admin/reportes/ReportesView.vue'
+import JornadasView from '../views/admin/jornadas/JornadasView.vue'
+import CajasView from '../views/admin/cajas/CajasView.vue'
+import SolicitudesView from '../views/admin/solicitudes/SolicitudesView.vue'
 
-// CAJERO
 import NuevoPedidoView from '../views/cajero/nuevo-pedido/NuevoPedidoView.vue'
 import RegistrarPagoView from '../views/cajero/registrar-pago/RegistrarPagoView.vue'
 import HistorialPedidosView from '../views/cajero/historial-pedidos/HistorialPedidosView.vue'
 import ReimprimirTicketView from '../views/cajero/reimprimir-ticket/ReimprimirTicketView.vue'
-import JornadasView from '../views/admin/jornadas/JornadasView.vue'
-import CajasView from '../views/admin/cajas/CajasView.vue'
-import SolicitudesView from '../views/admin/solicitudes/SolicitudesView.vue'
 import CajaView from '../views/cajero/caja/CajaView.vue'
+import StockBebidasView from '../views/cajero/stock-bebidas/StockBebidasView.vue'
+import CatalogoProductosView from '../views/cajero/catalogo-productos/CatalogoProductosView.vue'
 
-// SUPERADMIN
+
 import SucursalesView from '../views/superadmin/sucursales/SucursalesView.vue'
 import EstadisticasSucursalView from '../views/superadmin/estadisticas-sucursal/EstadisticasSucursalView.vue'
 import AdministradoresView from '../views/superadmin/administradores/AdministradoresView.vue'
@@ -91,13 +90,11 @@ const routes = [
     path: '/',
     redirect: '/login',
   },
-
   {
     path: '/home',
     name: 'home',
     component: HomeView,
   },
-
   {
     path: '/login',
     name: 'login',
@@ -106,13 +103,6 @@ const routes = [
       requiereInvitado: true,
     },
   },
-
-  /*
-  |--------------------------------------------------------------------------
-  | SUPERADMIN
-  |--------------------------------------------------------------------------
-  */
-
   {
     path: '/superadmin',
     component: MainLayout,
@@ -125,13 +115,11 @@ const routes = [
         path: '',
         redirect: '/superadmin/dashboard',
       },
-
       {
         path: 'dashboard',
         name: 'superadmin-dashboard',
         component: SuperAdminDashboard,
       },
-
       {
         path: 'sucursales',
         name: 'superadmin-sucursales',
@@ -140,7 +128,6 @@ const routes = [
           permiso: 'ver_sucursales',
         },
       },
-
       {
         path: 'sucursales/:id/estadisticas',
         name: 'superadmin-sucursal-estadisticas',
@@ -149,7 +136,6 @@ const routes = [
           permiso: 'ver_sucursales',
         },
       },
-
       {
         path: 'administradores',
         name: 'superadmin-administradores',
@@ -158,7 +144,6 @@ const routes = [
           permiso: 'ver_administradores',
         },
       },
-
       {
         path: 'usuarios/:id/permisos',
         name: 'superadmin-usuario-permisos',
@@ -169,13 +154,6 @@ const routes = [
       },
     ],
   },
-
-  /*
-  |--------------------------------------------------------------------------
-  | ADMIN
-  |--------------------------------------------------------------------------
-  */
-
   {
     path: '/admin',
     component: MainLayout,
@@ -188,13 +166,11 @@ const routes = [
         path: '',
         redirect: '/admin/dashboard',
       },
-
       {
         path: 'dashboard',
         name: 'admin-dashboard',
         component: AdminDashboard,
       },
-
       {
         path: 'inventario',
         name: 'admin-inventario',
@@ -203,7 +179,6 @@ const routes = [
           permiso: 'ver_inventario',
         },
       },
-
       {
         path: 'empleados',
         name: 'admin-empleados',
@@ -212,7 +187,6 @@ const routes = [
           permiso: 'ver_empleados',
         },
       },
-
       {
         path: 'reportes',
         name: 'admin-reportes',
@@ -221,7 +195,6 @@ const routes = [
           permiso: 'crear_reportes',
         },
       },
-
       {
         path: 'usuarios/:id/permisos',
         name: 'admin-usuario-permisos',
@@ -231,44 +204,31 @@ const routes = [
         },
       },
       {
-        path: '/admin/jornadas',
+        path: 'jornadas',
         name: 'admin-jornadas',
         component: JornadasView,
         meta: {
-          requiresAuth: true,
-          roles: ['ADMIN'],
           permiso: 'ver_jornadas',
         },
       },
       {
-        path: '/admin/cajas',
+        path: 'cajas',
         name: 'admin-cajas',
         component: CajasView,
         meta: {
-          requiresAuth: true,
-          roles: ['ADMIN'],
           permiso: 'ver_cajas',
         },
       },
       {
-        path: '/admin/solicitudes',
+        path: 'solicitudes',
         name: 'admin-solicitudes',
         component: SolicitudesView,
         meta: {
-          requiresAuth: true,
-          roles: ['ADMIN'],
           permiso: 'crear_solicitudes',
         },
       },
     ],
   },
-
-  /*
-  |--------------------------------------------------------------------------
-  | CAJERO
-  |--------------------------------------------------------------------------
-  */
-
   {
     path: '/cajero',
     component: MainLayout,
@@ -281,13 +241,11 @@ const routes = [
         path: '',
         redirect: '/cajero/dashboard',
       },
-
       {
         path: 'dashboard',
         name: 'cajero-dashboard',
         component: CajeroDashboard,
       },
-
       {
         path: 'nuevo-pedido',
         name: 'cajero-nuevo-pedido',
@@ -296,7 +254,15 @@ const routes = [
           permiso: 'crear_pedidos',
         },
       },
-
+      {
+        path: 'catalogo-productos',
+        name: 'cajero-catalogo-productos',
+        component: CatalogoProductosView,
+        meta: {
+          requiereAuth: true,
+          roles: ['CAJERO', 'ADMIN', 'SUPERADMIN'],
+        },
+      },
       {
         path: 'registrar-pago',
         name: 'cajero-registrar-pago',
@@ -305,7 +271,6 @@ const routes = [
           permiso: 'registrar_pagos',
         },
       },
-
       {
         path: 'historial',
         name: 'cajero-historial',
@@ -314,7 +279,6 @@ const routes = [
           permiso: 'ver_pedidos',
         },
       },
-
       {
         path: 'reimprimir-ticket',
         name: 'cajero-reimprimir-ticket',
@@ -324,16 +288,23 @@ const routes = [
         },
       },
       {
-  path: 'caja',
-  name: 'cajero-caja',
-  component: CajaView,
-  meta: {
-    permiso: 'ver_cajas',
-  },
-},
+        path: 'caja',
+        name: 'cajero-caja',
+        component: CajaView,
+        meta: {
+          permiso: 'ver_cajas',
+        },
+      },
+      {
+        path: 'stock-bebidas',
+        name: 'cajero-stock-bebidas',
+        component: StockBebidasView,
+        meta: {
+          permiso: 'ver_stock_bebidas',
+        },
+      },
     ],
   },
-
   {
     path: '/:pathMatch(.*)*',
     redirect: '/login',
@@ -347,7 +318,6 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const token = localStorage.getItem('token')
-
   const usuarioGuardado = localStorage.getItem('usuario')
 
   let usuario = null

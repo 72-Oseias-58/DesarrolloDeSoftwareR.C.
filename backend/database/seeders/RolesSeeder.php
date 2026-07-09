@@ -9,25 +9,32 @@ class RolesSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('roles')->insert([
+        $roles = [
             [
                 'id_rol' => 1,
                 'nombre' => 'SUPERADMIN',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'id_rol' => 2,
                 'nombre' => 'ADMIN',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'id_rol' => 3,
                 'nombre' => 'CAJERO',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
-        ]);
+        ];
+
+        foreach ($roles as $rol) {
+            DB::table('roles')->updateOrInsert(
+                [
+                    'id_rol' => $rol['id_rol'],
+                ],
+                [
+                    'nombre' => $rol['nombre'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
     }
 }

@@ -68,7 +68,7 @@
                   </div>
 
                   <div class="text-grey-7 q-mt-sm">
-                    Inicia la operación diaria antes de habilitar cajas, pedidos y pagos.
+                    Inicia la operación diaria registrando las cruces de chancho y pollo disponibles.
                   </div>
 
                   <q-btn
@@ -80,7 +80,7 @@
                     unelevated
                     :disable="!!jornadaActual"
                     :loading="procesando"
-                    @click="confirmarAbrirJornada"
+                    @click="abrirDialogoApertura"
                   />
                 </q-card-section>
               </q-card>
@@ -116,8 +116,8 @@
           </div>
 
           <q-banner rounded class="bg-blue-1 text-blue-10 q-mt-md">
-            Una sucursal solo puede tener una jornada por día. Si la jornada ya fue cerrada,
-            no se podrá abrir otra para la misma fecha.
+            Una sucursal solo puede tener una jornada por día. Antes de abrirla debes registrar
+            las cruces de chancho y pollo disponibles para la venta.
           </q-banner>
 
           <q-card v-if="jornadaActual" flat bordered class="jornada-detalle-card q-mt-md">
@@ -153,6 +153,62 @@
                   <div class="detalle-value">
                     {{ jornadaActual.hora_fin || 'Pendiente' }}
                   </div>
+                </div>
+              </div>
+            </q-card-section>
+          </q-card>
+
+          <q-card
+            v-if="jornadaActual?.control_carne?.length"
+            flat
+            bordered
+            class="jornada-detalle-card q-mt-md"
+          >
+            <q-card-section>
+              <div class="text-h6 text-weight-bold q-mb-md">
+                Carne disponible de la jornada
+              </div>
+
+              <div class="row q-col-gutter-md">
+                <div
+                  v-for="control in jornadaActual.control_carne"
+                  :key="control.id_control_carne_jornada"
+                  class="col-12 col-md-6"
+                >
+                  <q-card flat bordered>
+                    <q-card-section>
+                      <div class="row items-center no-wrap">
+                        <q-icon
+                          name="restaurant"
+                          color="primary"
+                          size="34px"
+                          class="q-mr-md"
+                        />
+
+                        <div class="col">
+                          <div class="text-subtitle1 text-weight-bold">
+                            {{ control.tipo_carne?.nombre || 'Carne' }}
+                          </div>
+
+                          <div class="text-grey-7">
+                            Cruces: {{ formatoCantidad(control.cantidad_cruces) }}
+                          </div>
+
+                          <div class="text-grey-7">
+                            Inicial:
+                            {{ formatoCantidad(control.cantidad_base_inicial) }}
+                            {{ control.unidad_base }}
+                          </div>
+
+                          <div class="text-weight-bold q-mt-xs">
+                            Actual:
+                            {{ formatoCantidad(control.cantidad_base_actual) }}
+                            {{ control.unidad_base }}
+                          </div>
+                        </div>
+                      </div>
+                    </q-card-section>
+                  </q-card>
                 </div>
               </div>
             </q-card-section>
@@ -210,6 +266,112 @@
         </template>
       </q-card-section>
     </q-card>
+
+    <q-dialog v-model="mostrarDialogoApertura" persistent>
+      <q-card style="width: 640px; max-width: 95vw;">
+        <q-card-section>
+          <div class="text-h6 text-weight-bold">
+            Abrir jornada
+          </div>
+
+          <div class="text-grey-7">
+            Registra cuántas cruces de chancho y pollo hay disponibles para vender hoy.
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-section>
+          <q-banner rounded class="bg-orange-1 text-orange-10 q-mb-md">
+            Conversión usada:
+            1 cruz de chancho = 2 costillas/huesos.
+            1 cruz de pollo = 2 pollos.
+          </q-banner>
+
+          <div class="row q-col-gutter-md">
+            <div class="col-12 col-md-6">
+              <q-card flat bordered>
+                <q-card-section>
+                  <div class="text-subtitle1 text-weight-bold q-mb-md">
+                    Chancho
+                  </div>
+
+                  <q-input
+                    v-model.number="formApertura.chancho_cruces"
+                    outlined
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    label="Cruces de chancho"
+                    hint="Ej: 3 cruces"
+                  />
+
+                  <div class="text-grey-7 q-mt-sm">
+                    Base inicial:
+                    <b>{{ formatoCantidad(baseChancho) }} COSTILLA</b>
+                  </div>
+                </q-card-section>
+              </q-card>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <q-card flat bordered>
+                <q-card-section>
+                  <div class="text-subtitle1 text-weight-bold q-mb-md">
+                    Pollo
+                  </div>
+
+                  <q-input
+                    v-model.number="formApertura.pollo_cruces"
+                    outlined
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    label="Cruces de pollo"
+                    hint="Ej: 5 cruces"
+                  />
+
+                  <div class="text-grey-7 q-mt-sm">
+                    Base inicial:
+                    <b>{{ formatoCantidad(basePollo) }} POLLO</b>
+                  </div>
+                </q-card-section>
+              </q-card>
+            </div>
+
+            <div class="col-12">
+              <q-input
+                v-model="formApertura.observacion"
+                outlined
+                autogrow
+                maxlength="1000"
+                label="Observación general"
+                hint="Opcional"
+              />
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn
+            flat
+            label="Cancelar"
+            color="grey-8"
+            :disable="procesando"
+            @click="cerrarDialogoApertura"
+          />
+
+          <q-btn
+            unelevated
+            color="green"
+            icon="play_circle"
+            label="Abrir jornada"
+            :loading="procesando"
+            @click="confirmarAbrirJornada"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 

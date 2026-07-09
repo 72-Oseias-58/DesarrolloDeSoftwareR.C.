@@ -16,12 +16,40 @@ class ProductoVenta extends Model
         'precio',
         'tipo_producto',
         'prioridad_stock',
+        'consume_carne',
+        'consumos_carne',
+        'imagen',
         'id_categoria_producto',
+        'id_insumo',
     ];
 
     protected $casts = [
         'precio' => 'decimal:2',
+        'consume_carne' => 'boolean',
+        'consumos_carne' => 'array',
     ];
+
+    protected $appends = [
+        'imagen_url',
+    ];
+
+    public function getImagenUrlAttribute(): ?string
+    {
+        if (!$this->imagen) {
+            return null;
+        }
+
+        return asset('storage/' . $this->imagen);
+    }
+
+    public function insumo()
+    {
+        return $this->belongsTo(
+            Insumo::class,
+            'id_insumo',
+            'id_insumo'
+        );
+    }
 
     public function guarniciones()
     {

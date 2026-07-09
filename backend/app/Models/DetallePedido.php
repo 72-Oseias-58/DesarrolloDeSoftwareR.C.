@@ -17,12 +17,22 @@ class DetallePedido extends Model
         'precio_unitario',
         'subtotal',
         'observacion',
+        'consumo_chancho_total',
+        'consumo_pollo_total',
+        'es_pura_carne',
+        'tipo_carne_manual',
+        'cantidad_carne_manual',
+        'unidad_carne_manual',
     ];
 
     protected $casts = [
         'cantidad' => 'integer',
         'precio_unitario' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'consumo_chancho_total' => 'decimal:2',
+        'consumo_pollo_total' => 'decimal:2',
+        'es_pura_carne' => 'boolean',
+        'cantidad_carne_manual' => 'decimal:2',
     ];
 
     public function pedido()

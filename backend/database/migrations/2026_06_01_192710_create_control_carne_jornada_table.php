@@ -18,6 +18,11 @@ return new class extends Migration
             $table->integer('cantidad_cruces')->nullable();
             $table->integer('platos_estimados')->nullable();
 
+            $table->decimal('cantidad_base_inicial', 10, 2)->default(0);
+            $table->decimal('cantidad_base_actual', 10, 2)->default(0);
+            $table->string('unidad_base', 50)->nullable();
+            $table->text('observacion')->nullable();
+
             $table->dateTime('created_at')->nullable()->useCurrent();
             $table->dateTime('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
 

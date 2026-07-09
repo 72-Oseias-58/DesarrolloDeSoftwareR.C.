@@ -91,7 +91,15 @@ const menuItems = [
     roles: ['CAJERO'],
   },
   {
-    label: 'Nuevo Pedido',
+    label: 'Catálogo',
+    caption: 'Platos y bebidas para vender',
+    icon: 'restaurant_menu',
+    to: '/cajero/catalogo-productos',
+    roles: ['CAJERO', 'ADMIN', 'SUPERADMIN'],
+    
+  },
+  {
+    label: 'Nueva Venta',
     caption: 'Registrar venta o pedido',
     icon: 'point_of_sale',
     to: '/cajero/nuevo-pedido',
@@ -115,7 +123,7 @@ const menuItems = [
     permiso: 'ver_pedidos',
   },
   {
-    label: 'Reimprimir Ticket',
+    label: 'Imprimir Ticket',
     caption: 'Volver a imprimir comprobante',
     icon: 'print',
     to: '/cajero/reimprimir-ticket',
@@ -129,6 +137,14 @@ const menuItems = [
     to: '/cajero/caja',
     roles: ['CAJERO'],
     permiso: 'ver_cajas',
+  },
+  {
+    label: 'Stock Bebidas',
+    caption: 'Entradas y salidas de bebidas',
+    icon: 'local_drink',
+    to: '/cajero/stock-bebidas',
+    roles: ['CAJERO'],
+    permiso: 'ver_stock_bebidas',
   },
 ]
 
@@ -150,20 +166,11 @@ export function useMainLayout() {
   const usuario = computed(() => authStore.user || null)
 
   const nombreUsuario = computed(() => {
-    return (
-      usuario.value?.name ||
-      usuario.value?.nombre ||
-      'Usuario'
-    )
+    return usuario.value?.name || usuario.value?.nombre || 'Usuario'
   })
 
   const rolUsuario = computed(() => {
-    return (
-      authStore.rol ||
-      usuario.value?.rol ||
-      usuario.value?.nombre_rol ||
-      'SIN ROL'
-    )
+    return authStore.rol || usuario.value?.rol || usuario.value?.nombre_rol || 'SIN ROL'
   })
 
   const tienePermisoItem = (item) => {
@@ -175,23 +182,14 @@ export function useMainLayout() {
   }
 
   const menuSucursales = computed(() => {
-    if (
-      rolUsuario.value !== 'SUPERADMIN' ||
-      !authStore.tienePermiso('ver_sucursales')
-    ) {
+    if (rolUsuario.value !== 'SUPERADMIN' || !authStore.tienePermiso('ver_sucursales')) {
       return []
     }
 
     const items = sucursales.value.map((sucursal) => ({
       label: sucursal.nombre,
-      caption:
-        sucursal.estado === 'ACTIVA'
-          ? 'Ver estadísticas'
-          : 'Sucursal inactiva',
-      icon:
-        sucursal.estado === 'ACTIVA'
-          ? 'storefront'
-          : 'store_mall_directory',
+      caption: sucursal.estado === 'ACTIVA' ? 'Ver estadísticas' : 'Sucursal inactiva',
+      icon: sucursal.estado === 'ACTIVA' ? 'storefront' : 'store_mall_directory',
       to: `/superadmin/sucursales/${sucursal.id_sucursal}/estadisticas`,
       roles: ['SUPERADMIN'],
       estado: sucursal.estado,
@@ -222,9 +220,7 @@ export function useMainLayout() {
       return menuBase
     }
 
-    const indiceSucursales = menuBase.findIndex(
-      (item) => item.to === '/superadmin/sucursales',
-    )
+    const indiceSucursales = menuBase.findIndex((item) => item.to === '/superadmin/sucursales')
 
     if (indiceSucursales === -1) {
       return [...menuBase, ...menuSucursales.value]
@@ -248,10 +244,7 @@ export function useMainLayout() {
   }
 
   const cargarSucursalesSidebar = async () => {
-    if (
-      rolUsuario.value !== 'SUPERADMIN' ||
-      !authStore.tienePermiso('ver_sucursales')
-    ) {
+    if (rolUsuario.value !== 'SUPERADMIN' || !authStore.tienePermiso('ver_sucursales')) {
       sucursales.value = []
       return
     }
@@ -265,11 +258,7 @@ export function useMainLayout() {
         ? response.data.sucursales
         : []
     } catch (error) {
-      console.error(
-        'Error al cargar sucursales del sidebar:',
-        error,
-      )
-
+      console.error('Error al cargar sucursales del sidebar:', error)
       sucursales.value = []
     } finally {
       cargandoSucursales.value = false
@@ -281,9 +270,7 @@ export function useMainLayout() {
 
     $q.notify({
       type: 'info',
-      message: $q.dark.isActive
-        ? 'Modo oscuro activado'
-        : 'Modo claro activado',
+      message: $q.dark.isActive ? 'Modo oscuro activado' : 'Modo claro activado',
       position: 'top',
       timeout: 1500,
     })

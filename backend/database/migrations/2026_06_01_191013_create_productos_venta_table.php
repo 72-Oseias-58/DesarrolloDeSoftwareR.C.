@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('tipo_producto', 50)->nullable();
             $table->string('prioridad_stock', 50)->nullable();
 
+            // Imagen del plato o bebida.
+            $table->string('imagen', 255)->nullable();
+
             $table->unsignedInteger('id_categoria_producto');
 
             $table->dateTime('created_at')->nullable()->useCurrent();
