@@ -1,0 +1,71 @@
+.compras-internas-page {
+  width: 100%;
+}
+
+.compras-internas-card {
+  width: 100%;
+  border-radius: 18px;
+}
+
+.jornada-card {
+  border-radius: 14px;
+}
+
+.resumen-card {
+  height: 100%;
+  border-radius: 14px;
+}
+
+.resumen-label {
+  margin-top: 8px;
+  color: #757575;
+  font-size: 14px;
+}
+
+.resumen-valor {
+  margin-top: 4px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.producto-compra-row {
+  padding: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+}
+
+.detalle-label {
+  color: #757575;
+  font-size: 13px;
+}
+
+.detalle-value {
+  margin-top: 3px;
+  font-weight: 600;
+}
+
+:deep(.q-table__container) {
+  overflow-x: auto;
+}
+
+:deep(.q-table th) {
+  white-space: nowrap;
+}
+
+:deep(.q-table td) {
+  vertical-align: top;
+}
+
+@media (max-width: 600px) {
+  .compras-internas-page {
+    padding: 8px;
+  }
+
+  .compras-internas-card {
+    border-radius: 12px;
+  }
+
+  .producto-compra-row {
+    padding: 10px;
+  }
+}

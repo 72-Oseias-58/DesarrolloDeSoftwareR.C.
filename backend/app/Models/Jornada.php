@@ -66,4 +66,20 @@ class Jornada extends Model
             'id_jornada'
         );
     }
+    public function comprasInternas()
+{
+    return $this->hasMany(
+        CompraInterna::class,
+        'id_jornada',
+        'id_jornada'
+    );
+}
+public function reporte()
+{
+    return $this->hasOne(
+        Reporte::class,
+        'id_jornada',
+        'id_jornada'
+    );
+}
 }

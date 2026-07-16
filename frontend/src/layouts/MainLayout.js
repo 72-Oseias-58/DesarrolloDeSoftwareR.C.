@@ -5,6 +5,7 @@ import { useAutoLogout } from '@/composables/useAutoLogout'
 import api from '@/api/axios'
 
 const menuItems = [
+  // SUPERADMIN
   {
     label: 'Dashboard',
     caption: 'Resumen general de ventas',
@@ -28,6 +29,16 @@ const menuItems = [
     roles: ['SUPERADMIN'],
     permiso: 'ver_administradores',
   },
+  {
+    label: 'Reportes',
+    caption: 'Cierres de todas las sucursales',
+    icon: 'assessment',
+    to: '/superadmin/reportes-jornada',
+    roles: ['SUPERADMIN'],
+    permiso: 'ver_reportes',
+  },
+
+  // ADMIN
   {
     label: 'Dashboard',
     caption: 'Estadísticas de la sucursal',
@@ -60,6 +71,14 @@ const menuItems = [
     permiso: 'ver_jornadas',
   },
   {
+    label: 'Catálogo',
+    caption: 'Administrar platos y bebidas',
+    icon: 'restaurant_menu',
+    to: '/admin/catalogo-productos',
+    roles: ['ADMIN'],
+    permiso: 'ver_catalogo_pedidos',
+  },
+  {
     label: 'Cajas',
     caption: 'Control de cajas y cajeros',
     icon: 'point_of_sale',
@@ -68,12 +87,28 @@ const menuItems = [
     permiso: 'ver_cajas',
   },
   {
+    label: 'Compras internas',
+    caption: 'Gastos operativos de la jornada',
+    icon: 'shopping_cart_checkout',
+    to: '/admin/compras-internas',
+    roles: ['ADMIN'],
+    permiso: 'ver_compras_internas',
+  },
+  {
+    label: 'Movimientos de carne',
+    caption: 'Llegadas, salidas y ajustes',
+    icon: 'set_meal',
+    to: '/admin/movimientos-carne',
+    roles: ['ADMIN'],
+    permiso: 'ver_movimientos_carne',
+  },
+  {
     label: 'Reportes',
-    caption: 'Ventas, stock y actividad',
+    caption: 'Informes de cierre de jornada',
     icon: 'bar_chart',
     to: '/admin/reportes',
     roles: ['ADMIN'],
-    permiso: 'crear_reportes',
+    permiso: 'ver_reportes_jornada',
   },
   {
     label: 'Solicitudes',
@@ -83,14 +118,8 @@ const menuItems = [
     roles: ['ADMIN'],
     permiso: 'crear_solicitudes',
   },
-  {
-  label: 'Movimientos de carne',
-  caption: 'Llegadas, salidas y ajustes',
-  icon: 'set_meal',
-  to: '/admin/movimientos-carne',
-  roles: ['ADMIN'],
-  permiso: 'ver_movimientos_carne',
-},
+
+  // CAJERO
   {
     label: 'Dashboard',
     caption: 'Panel de caja',
@@ -99,21 +128,13 @@ const menuItems = [
     roles: ['CAJERO'],
   },
   {
-  label: 'Catálogo',
-  caption: 'Platos y bebidas para vender',
-  icon: 'restaurant_menu',
-  to: '/cajero/catalogo-productos',
-  roles: ['CAJERO'],
-  permiso: 'ver_catalogo_pedidos',
-},
-  {
-  label: 'Nuevo Pedido',
-  caption: 'Registrar venta o pedido',
-  icon: 'point_of_sale',
-  to: '/cajero/nuevo-pedido',
-  roles: ['CAJERO'],
-  permiso: 'crear_pedidos',
-},
+    label: 'Nuevo Pedido',
+    caption: 'Registrar venta o pedido',
+    icon: 'point_of_sale',
+    to: '/cajero/nuevo-pedido',
+    roles: ['CAJERO'],
+    permiso: 'crear_pedidos',
+  },
   {
     label: 'Registrar Pago',
     caption: 'Confirmar pago del cliente',
@@ -262,9 +283,7 @@ export function useMainLayout() {
     try {
       const response = await api.get('/sucursales')
 
-      sucursales.value = Array.isArray(response.data?.sucursales)
-        ? response.data.sucursales
-        : []
+      sucursales.value = Array.isArray(response.data?.sucursales) ? response.data.sucursales : []
     } catch (error) {
       console.error('Error al cargar sucursales del sidebar:', error)
       sucursales.value = []

@@ -10,7 +10,7 @@ import MainLayout from '../layouts/MainLayout.vue'
 import SuperAdminDashboard from '../views/dashboard/superadmin/SuperAdminDashboard.vue'
 import AdminDashboard from '../views/dashboard/admin/AdminDashboard.vue'
 import CajeroDashboard from '../views/dashboard/cajero/CajeroDashboard.vue'
-
+// admin views
 import InventarioView from '../views/admin/inventario/InventarioView.vue'
 import EmpleadosView from '../views/admin/empleados/EmpleadosView.vue'
 import ReportesView from '../views/admin/reportes/ReportesView.vue'
@@ -18,18 +18,20 @@ import JornadasView from '../views/admin/jornadas/JornadasView.vue'
 import CajasView from '../views/admin/cajas/CajasView.vue'
 import SolicitudesView from '../views/admin/solicitudes/SolicitudesView.vue'
 import MovimientosCarneView from '../views/admin/movimientos-carne/MovimientosCarneView.vue'
-
+import CatalogoProductosView from '../views/admin/catalogo-productos/CatalogoProductosView.vue'
+import ComprasInternasView from '../views/admin/compras-internas/ComprasInternasView.vue'
+// cajero views
 import NuevoPedidoView from '../views/cajero/nuevo-pedido/NuevoPedidoView.vue'
 import RegistrarPagoView from '../views/cajero/registrar-pago/RegistrarPagoView.vue'
 import HistorialPedidosView from '../views/cajero/historial-pedidos/HistorialPedidosView.vue'
 import ReimprimirTicketView from '../views/cajero/reimprimir-ticket/ReimprimirTicketView.vue'
 import CajaView from '../views/cajero/caja/CajaView.vue'
 import StockBebidasView from '../views/cajero/stock-bebidas/StockBebidasView.vue'
-import CatalogoProductosView from '../views/cajero/catalogo-productos/CatalogoProductosView.vue'
-
+// superadmin views
 import SucursalesView from '../views/superadmin/sucursales/SucursalesView.vue'
 import EstadisticasSucursalView from '../views/superadmin/estadisticas-sucursal/EstadisticasSucursalView.vue'
 import AdministradoresView from '../views/superadmin/administradores/AdministradoresView.vue'
+import ReportesSucursalesView from '../views/superadmin/reportes/ReportesSucursalesView.vue'
 
 const obtenerNombreRol = (usuario) => {
   return (
@@ -160,6 +162,15 @@ const routes = [
           permiso: 'gestionar_permisos_admin',
         },
       },
+      {
+        path: 'reportes-jornada',
+        name: 'superadmin-reportes-jornada',
+        component: ReportesSucursalesView,
+        meta: {
+          roles: ['SUPERADMIN'],
+          permiso: 'ver_reportes',
+        },
+      },
     ],
   },
 
@@ -202,6 +213,15 @@ const routes = [
         },
       },
       {
+        path: 'compras-internas',
+        name: 'admin-compras-internas',
+        component: ComprasInternasView,
+        meta: {
+          roles: ['ADMIN'],
+          permiso: 'ver_compras_internas',
+        },
+      },
+      {
         path: 'reportes',
         name: 'admin-reportes',
         component: ReportesView,
@@ -226,6 +246,15 @@ const routes = [
         meta: {
           roles: ['ADMIN'],
           permiso: 'ver_jornadas',
+        },
+      },
+      {
+        path: 'catalogo-productos',
+        name: 'admin-catalogo-productos',
+        component: CatalogoProductosView,
+        meta: {
+          roles: ['ADMIN'],
+          permiso: 'ver_catalogo_pedidos',
         },
       },
       {
@@ -287,15 +316,7 @@ const routes = [
           permiso: 'crear_pedidos',
         },
       },
-      {
-        path: 'catalogo-productos',
-        name: 'cajero-catalogo-productos',
-        component: CatalogoProductosView,
-        meta: {
-          roles: ['CAJERO'],
-          permiso: 'ver_catalogo_pedidos',
-        },
-      },
+
       {
         path: 'registrar-pago',
         name: 'cajero-registrar-pago',

@@ -11,6 +11,7 @@ export default defineComponent({
     const router = useRouter()
     const productos = ref([])
     const detalles = ref([])
+    const categoriaProductos = ref('PLATO')
     const tipoConsumo = ref('PARA_LLEVAR')
 
     const cargandoProductos = ref(false)
@@ -200,6 +201,22 @@ export default defineComponent({
     const esPlato = (producto) => {
       return String(producto?.tipo_producto || '').toUpperCase() === 'PLATO'
     }
+    // Separa los platos.
+const productosPlatos = computed(() => {
+  return productos.value.filter((producto) => esPlato(producto))
+})
+
+// Separa las bebidas.
+const productosBebidas = computed(() => {
+  return productos.value.filter((producto) => esBebida(producto))
+})
+
+// Muestra la categoría seleccionada.
+const productosFiltrados = computed(() => {
+  return categoriaProductos.value === 'BEBIDA'
+    ? productosBebidas.value
+    : productosPlatos.value
+})
 
     const prioridadProducto = (producto) => {
       return String(producto?.prioridad_stock || '').toUpperCase()
@@ -1109,85 +1126,92 @@ const resetFormPuraCarne = () => {
     })
 
     return {
-      productos,
-      detalles,
-      tipoConsumo,
-      tiposConsumo,
-      tiposCarneManual,
-      opcionesPreparacion,
+  productos,
+  productosPlatos,
+  productosBebidas,
+  productosFiltrados,
+  categoriaProductos,
 
-      cargandoProductos,
-      registrandoPedido,
-      errorProductos,
+  detalles,
+  tipoConsumo,
+  tiposConsumo,
+  tiposCarneManual,
+  opcionesPreparacion,
 
-      jornadaActual,
-      cargandoJornada,
-      errorJornada,
+  cargandoProductos,
+  registrandoPedido,
+  errorProductos,
 
-      mostrarDialogoPuraCarne,
-      formPuraCarne,
+  jornadaActual,
+  cargandoJornada,
+  errorJornada,
 
-      cantidadProductos,
-      totalPedido,
-      consumoBaseFormPuraCarne,
+  mostrarDialogoPuraCarne,
+  formPuraCarne,
 
-      cargarProductos,
-      cargarJornadaActual,
-      actualizarPantalla,
+  cantidadProductos,
+  totalPedido,
+  consumoBaseFormPuraCarne,
 
-      abrirDialogoPuraCarne,
-      cerrarDialogoPuraCarne,
-      agregarPuraCarne,
+  cargarProductos,
+  cargarJornadaActual,
+  actualizarPantalla,
 
-      agregarProducto,
-      duplicarCombinacion,
-      eliminarDetalle,
-      aumentarCantidad,
-      disminuirCantidad,
-      subtotalDetalle,
-      aplicarPreparacion,
-      opcionesGuarniciones,
-      obtenerGuarnicionesSeleccionadas,
+  abrirDialogoPuraCarne,
+  cerrarDialogoPuraCarne,
+  agregarPuraCarne,
 
-      tieneGuarniciones,
-      esBebida,
-      esPlato,
-      usaInventario,
-      usaProduccionDiaria,
-      esProductoIndependiente,
-      estaAgotado,
-      stockDisponible,
-      stockRestanteProducto,
-      stockRestanteDetalle,
-      puedeAgregarProducto,
-      puedeAumentarCantidad,
-      textoStockProducto,
-      textoConsumoProducto,
-      etiquetaControlProducto,
+  agregarProducto,
+  duplicarCombinacion,
+  eliminarDetalle,
+  aumentarCantidad,
+  disminuirCantidad,
+  subtotalDetalle,
 
-      obtenerControlCarneJornada,
-      nombreTipoCarne,
-      unidadBaseCarne,
-      porcentajeRestanteCarne,
+  aplicarPreparacion,
+  opcionesGuarniciones,
+  obtenerGuarnicionesSeleccionadas,
 
-      opcionesUnidadCarne,
-      cambiarTipoCarneForm,
-      cambiarTipoCarneDetalle,
-      etiquetaTipoCarne,
-      etiquetaUnidadCarne,
-      consumoBasePuraCarne,
-      unidadBasePuraCarne,
+  tieneGuarniciones,
+  esBebida,
+  esPlato,
+  usaInventario,
+  usaProduccionDiaria,
+  esProductoIndependiente,
+  estaAgotado,
 
-      iconoProducto,
-      formatoDinero,
-      formatoCantidad,
-      confirmarPedido,
+  stockDisponible,
+  stockRestanteProducto,
+  stockRestanteDetalle,
+  puedeAgregarProducto,
+  puedeAumentarCantidad,
 
-      rangoPlatosChancho,
+  textoStockProducto,
+  textoConsumoProducto,
+  etiquetaControlProducto,
 
-      esChanchoControl,
-      costillasGrandesChancho,
-      rangoMinCostillasChancho,
-    }
+  obtenerControlCarneJornada,
+  nombreTipoCarne,
+  unidadBaseCarne,
+  porcentajeRestanteCarne,
+
+  opcionesUnidadCarne,
+  cambiarTipoCarneForm,
+  cambiarTipoCarneDetalle,
+  etiquetaTipoCarne,
+  etiquetaUnidadCarne,
+  consumoBasePuraCarne,
+  unidadBasePuraCarne,
+
+  iconoProducto,
+  formatoDinero,
+  formatoCantidad,
+  confirmarPedido,
+
+  rangoPlatosChancho,
+  esChanchoControl,
+  costillasGrandesChancho,
+  rangoMinCostillasChancho,
+}
   },
 })

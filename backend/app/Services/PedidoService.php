@@ -100,18 +100,6 @@ class PedidoService
                 ]);
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Preparar consumo de carne
-            |--------------------------------------------------------------------------
-            | Esto cubre:
-            | - platos con consumos_carne
-            | - platos mixtos
-            | - pura carne manual con conversión de unidades
-            | - platos independientes no descuentan nada
-            |--------------------------------------------------------------------------
-            */
-
             $preparacionCarne = $this->carneService->prepararConsumos(
                 $productos,
                 $datos['detalles']
@@ -174,11 +162,6 @@ class PedidoService
                 ]);
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Validar disponibilidad antes de crear pedido
-            |--------------------------------------------------------------------------
-            */
 
             $this->validarDisponibilidadInventario(
                 $empleado->id_sucursal,
@@ -191,11 +174,7 @@ class PedidoService
                 $consumosCarneTotales
             );
 
-            /*
-            |--------------------------------------------------------------------------
-            | Crear pedido
-            |--------------------------------------------------------------------------
-            */
+           
 
            $codigoPedido = $this->generarCodigo(
     $jornada->id_jornada,
@@ -229,12 +208,7 @@ class PedidoService
                 }
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Descontar producción diaria de carne
-            |--------------------------------------------------------------------------
-            */
-
+          
             $this->carneService->descontar(
     $jornada,
     $empleado->id_sucursal,
@@ -243,13 +217,7 @@ class PedidoService
     $pedido
 );
 
-            /*
-            |--------------------------------------------------------------------------
-            | Descontar inventario exacto
-            |--------------------------------------------------------------------------
-            | Bebidas y productos INVENTARIO.
-            |--------------------------------------------------------------------------
-            */
+          
 
             $this->descontarInventarioPorVenta(
                 $usuario,
@@ -410,15 +378,6 @@ class PedidoService
         $prioridadStock = strtoupper(
             (string) ($producto->prioridad_stock ?? '')
         );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Inventario exacto
-        |--------------------------------------------------------------------------
-        | Bebidas y productos envasados deben tener prioridad_stock INVENTARIO.
-        |--------------------------------------------------------------------------
-        */
-
         $usaInventario = $prioridadStock === 'INVENTARIO';
 
         if ($usaInventario) {
@@ -442,18 +401,6 @@ class PedidoService
 
             $descuentosInventario[$idInsumo]['cantidad'] += $cantidad;
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Guarniciones
-        |--------------------------------------------------------------------------
-        | Regla nueva:
-        | - Si el producto tiene guarniciones configuradas, debe elegir mínimo 1.
-        | - Si no tiene guarniciones, no se exige nada.
-        | - Charquecán y platos independientes pueden no tener guarniciones.
-        |--------------------------------------------------------------------------
-        */
-
         $guarnicionesSeleccionadas = array_values(
             array_unique($detalle['guarniciones'] ?? [])
         );

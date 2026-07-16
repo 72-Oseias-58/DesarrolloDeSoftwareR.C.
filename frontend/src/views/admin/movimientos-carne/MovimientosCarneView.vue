@@ -9,8 +9,7 @@
             </div>
 
             <div class="text-grey-7">
-              Registra llegadas, salidas, ajustes y mermas de carne
-              durante la jornada.
+              Registra llegadas, salidas, ajustes y mermas de carne durante la jornada.
             </div>
           </div>
 
@@ -24,7 +23,7 @@
 
       <q-separator />
 
-        <q-card-section>
+      <q-card-section>
         <div
           v-if="loadingInicial"
           class="column items-center q-pa-xl"
@@ -45,8 +44,8 @@
             rounded
             class="bg-orange-1 text-orange-10"
           >
-            No existe una jornada abierta. Debes abrir la jornada antes
-            de registrar movimientos de carne.
+            No existe una jornada abierta. Debes abrir la jornada antes de registrar movimientos de
+            carne.
           </q-banner>
 
           <template v-else>
@@ -112,6 +111,7 @@
 
                         <div class="text-weight-bold q-mt-xs">
                           Cantidad actual:
+
                           <span
                             :class="
                               Number(control.cantidad_base_actual || 0) > 0
@@ -130,11 +130,7 @@
                         >
                           Equivalencia aproximada:
                           <b>
-                            {{
-                              formatoCantidad(
-                                Number(control.cantidad_base_actual || 0) / 12
-                              )
-                            }}
+                            {{ formatoCantidad(Number(control.cantidad_base_actual || 0) / 12) }}
                             CostillasGrandes
                           </b>
                         </div>
@@ -180,7 +176,9 @@
                     :loading="loadingMovimientos"
                     @click="cargarDatos"
                   >
-                    <q-tooltip>Actualizar</q-tooltip>
+                    <q-tooltip>
+                      Actualizar
+                    </q-tooltip>
                   </q-btn>
                 </div>
               </q-card-section>
@@ -280,6 +278,52 @@
                     </q-td>
                   </template>
 
+                  <template #body-cell-empleado_recolector="props">
+                    <q-td :props="props">
+                      <template
+                        v-if="props.row.motivo === 'TIENDA_FAMILIAR'"
+                      >
+                        <div class="text-weight-bold">
+                          {{
+                            props.row.empleado_recolector?.nombre ||
+                            'Empleado no disponible'
+                          }}
+                        </div>
+
+                        <div class="text-caption text-grey-7">
+                          {{
+                            props.row.empleado_recolector?.cargo ||
+                            'Sin cargo registrado'
+                          }}
+                        </div>
+                      </template>
+
+                      <span
+                        v-else
+                        class="text-grey-6"
+                      >
+                        No aplica
+                      </span>
+                    </q-td>
+                  </template>
+
+                  <template #body-cell-fecha_hora_recojo="props">
+                    <q-td :props="props">
+                      <template
+                        v-if="props.row.motivo === 'TIENDA_FAMILIAR'"
+                      >
+                        {{ formatearFechaHora(props.row.fecha_hora_recojo) }}
+                      </template>
+
+                      <span
+                        v-else
+                        class="text-grey-6"
+                      >
+                        No aplica
+                      </span>
+                    </q-td>
+                  </template>
+
                   <template #body-cell-cantidad="props">
                     <q-td :props="props">
                       <div class="text-weight-bold">
@@ -314,6 +358,21 @@
                       {{ props.row.usuario_creador?.name || 'Sistema' }}
                     </q-td>
                   </template>
+
+                  <template #body-cell-observacion="props">
+                    <q-td :props="props">
+                      <span v-if="props.row.observacion">
+                        {{ props.row.observacion }}
+                      </span>
+
+                      <span
+                        v-else
+                        class="text-grey-6"
+                      >
+                        Sin observación
+                      </span>
+                    </q-td>
+                  </template>
                 </q-table>
 
                 <div
@@ -334,7 +393,8 @@
           </template>
         </template>
       </q-card-section>
-</q-card>
+    </q-card>
+
     <q-dialog
       v-model="mostrarDialogo"
       persistent
@@ -398,6 +458,61 @@
                 label="Unidad"
                 :disable="!form.id_tipo_carne"
                 :options="opcionesUnidad"
+              />
+            </div>
+
+            <div
+              v-if="mostrarDatosRecojo"
+              class="col-12"
+            >
+              <q-banner
+                rounded
+                class="bg-orange-1 text-orange-10 datos-recojo-banner"
+              >
+                <div class="text-weight-bold">
+                  Datos del recojo en tienda familiar
+                </div>
+
+                <div class="text-caption">
+                  Registra qué empleado fue por la carne y el momento real del recojo.
+                </div>
+              </q-banner>
+            </div>
+
+            <div
+              v-if="mostrarDatosRecojo"
+              class="col-12 col-md-6"
+            >
+              <q-select
+                v-model="form.id_empleado_recolector"
+                outlined
+                emit-value
+                map-options
+                label="Empleado que recogió la carne"
+                :loading="loadingEmpleados"
+                :options="opcionesEmpleadoRecolector"
+                hint="Solo empleados activos de esta sucursal"
+              >
+                <template #no-option>
+                  <q-item>
+                    <q-item-section class="text-grey">
+                      No existen empleados activos disponibles.
+                    </q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
+            </div>
+
+            <div
+              v-if="mostrarDatosRecojo"
+              class="col-12 col-md-6"
+            >
+              <q-input
+                v-model="form.fecha_hora_recojo"
+                outlined
+                type="datetime-local"
+                label="Fecha y hora del recojo"
+                hint="Momento real en que el empleado recogió la carne"
               />
             </div>
 

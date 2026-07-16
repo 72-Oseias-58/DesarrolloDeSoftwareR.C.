@@ -12,22 +12,27 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            // Roles
             RolesSeeder::class,
 
+            // Permisos
             PermisosSeeder::class,
             PermisosCatalogoSeeder::class,
             PermisosStockBebidasSeeder::class,
+            PermisosMovimientosCarneSeeder::class,
 
+            // Datos base
             TiposCarneSeeder::class,
             AreasPreparacionSeeder::class,
-
             SucursalBaseSeeder::class,
+
+            // Usuarios base
             UsuariosBaseSeeder::class,
 
+            // Catálogo e inventario
             BebidasInventarioSeeder::class,
             CatalogoPedidoSeeder::class,
-
-            PermisosMovimientosCarneSeeder::class,
+            RepararConsumosProductosVentaSeeder::class,
         ]);
     }
 }

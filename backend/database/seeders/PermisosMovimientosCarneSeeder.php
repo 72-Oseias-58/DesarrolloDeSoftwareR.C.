@@ -13,12 +13,12 @@ class PermisosMovimientosCarneSeeder extends Seeder
             [
                 'nombre' => 'Ver movimientos de carne',
                 'slug' => 'ver_movimientos_carne',
-                'descripcion' => 'Permite consultar entradas, salidas, ajustes, ventas y mermas de carne.',
+                'descripcion' => 'Permite consultar movimientos de carne',
             ],
             [
                 'nombre' => 'Registrar movimientos de carne',
                 'slug' => 'registrar_movimientos_carne',
-                'descripcion' => 'Permite registrar llegadas, salidas, ajustes y mermas de carne.',
+                'descripcion' => 'Permite registrar movimientos de carne',
             ],
         ];
 
@@ -33,12 +33,20 @@ class PermisosMovimientosCarneSeeder extends Seeder
         foreach ($permisos as $permiso) {
             DB::table('permisos')->updateOrInsert(
                 ['slug' => $permiso['slug']],
-                $permiso
+                [
+                    'nombre' => $permiso['nombre'],
+                    'descripcion' => $permiso['descripcion'],
+                    'updated_at' => now(),
+                ]
             );
 
             $idPermiso = DB::table('permisos')
                 ->where('slug', $permiso['slug'])
                 ->value('id_permiso');
+
+            if (!$idPermiso) {
+                continue;
+            }
 
             DB::table('permiso_rol')->updateOrInsert([
                 'id_rol' => $idRolAdmin,

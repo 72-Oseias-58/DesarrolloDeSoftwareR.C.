@@ -159,16 +159,38 @@
               <div>
                 <div class="text-h6 text-weight-bold">Productos disponibles</div>
 
-                <div class="text-grey-7">Platos y bebidas disponibles para vender.</div>
+                <div class="text-grey-7">
+                  Selecciona primero platos o bebidas para registrar el pedido con mayor rapidez.
+                </div>
               </div>
             </div>
           </q-card-section>
 
           <q-separator />
 
+          <q-tabs
+            v-model="categoriaProductos"
+            dense
+            align="justify"
+            active-color="primary"
+            indicator-color="primary"
+            class="productos-tabs"
+          >
+            <q-tab name="PLATO" icon="restaurant" :label="`Platos (${productosPlatos.length})`" />
+
+            <q-tab
+              name="BEBIDA"
+              icon="local_drink"
+              :label="`Bebidas (${productosBebidas.length})`"
+            />
+          </q-tabs>
+
+          <q-separator />
+
           <q-card-section>
             <div v-if="cargandoProductos" class="estado-catalogo">
               <q-spinner color="primary" size="46px" />
+
               <div class="q-mt-md text-grey-7">Cargando productos...</div>
             </div>
 
@@ -182,95 +204,130 @@
               <div class="q-mt-md text-grey-7">No existen productos registrados.</div>
             </div>
 
-            <div v-else class="row q-col-gutter-md">
-              <div
-                v-for="producto in productos"
-                :key="producto.id_producto"
-                class="col-12 col-sm-6"
-              >
-                <q-card flat bordered class="producto-card">
-                  <q-img
-                    v-if="producto.imagen_url"
-                    :src="producto.imagen_url"
-                    height="150px"
-                    fit="cover"
-                  />
+            <div v-else-if="productosFiltrados.length === 0" class="estado-catalogo">
+              <q-icon
+                :name="categoriaProductos === 'BEBIDA' ? 'local_drink' : 'restaurant'"
+                size="54px"
+                color="grey-5"
+              />
 
-                  <div v-else class="row flex-center bg-grey-2" style="height: 150px">
-                    <q-icon :name="iconoProducto(producto)" size="56px" color="grey-5" />
-                  </div>
-
-                  <q-card-section>
-                    <div class="row no-wrap items-start">
-                      <q-icon
-                        :name="iconoProducto(producto)"
-                        size="34px"
-                        color="primary"
-                        class="q-mr-md"
-                      />
-
-                      <div class="col">
-                        <div class="text-subtitle1 text-weight-bold">
-                          {{ producto.nombre }}
-                        </div>
-
-                        <div class="producto-descripcion">
-                          {{ producto.descripcion || 'Sin descripción' }}
-                        </div>
-
-                        <div class="q-mt-sm row q-gutter-xs">
-                          <q-chip dense color="orange-1" text-color="orange-10" icon="inventory">
-                            {{ etiquetaControlProducto(producto) }}
-                          </q-chip>
-
-                          <q-chip
-                            v-if="producto.consume_carne"
-                            dense
-                            color="red-1"
-                            text-color="red-10"
-                            icon="local_fire_department"
-                          >
-                            Consume carne
-                          </q-chip>
-
-                          <q-chip
-                            v-if="esProductoIndependiente(producto)"
-                            dense
-                            color="green-1"
-                            text-color="green-10"
-                            icon="restaurant"
-                          >
-                            Independiente
-                          </q-chip>
-                        </div>
-
-                        <div
-                          v-if="textoStockProducto(producto)"
-                          class="q-mt-sm text-caption"
-                          :class="estaAgotado(producto) ? 'text-negative' : 'text-grey-7'"
-                        >
-                          {{ textoStockProducto(producto) }}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="row items-center justify-between q-mt-md">
-                      <div class="producto-precio">Bs {{ formatoDinero(producto.precio) }}</div>
-
-                      <q-btn
-                        color="primary"
-                        icon="add_shopping_cart"
-                        label="Agregar"
-                        unelevated
-                        dense
-                        :disable="!puedeAgregarProducto(producto)"
-                        @click="agregarProducto(producto)"
-                      />
-                    </div>
-                  </q-card-section>
-                </q-card>
+              <div class="q-mt-md text-grey-7">
+                {{
+                  categoriaProductos === 'BEBIDA'
+                    ? 'No existen bebidas registradas.'
+                    : 'No existen platos registrados.'
+                }}
               </div>
             </div>
+
+            <div v-else class="row q-col-gutter-md">
+  <div
+    v-for="producto in productosFiltrados"
+    :key="producto.id_producto"
+    class="col-12 col-sm-6"
+  >
+    <q-card flat bordered class="producto-card">
+      <q-img
+        v-if="producto.imagen_url"
+        :src="producto.imagen_url"
+        height="150px"
+        fit="cover"
+      />
+
+      <div
+        v-else
+        class="row flex-center bg-grey-2"
+        style="height: 150px"
+      >
+        <q-icon
+          :name="iconoProducto(producto)"
+          size="56px"
+          color="grey-5"
+        />
+      </div>
+
+      <q-card-section>
+        <div class="row no-wrap items-start">
+          <q-icon
+            :name="iconoProducto(producto)"
+            size="34px"
+            color="primary"
+            class="q-mr-md"
+          />
+
+          <div class="col">
+            <div class="text-subtitle1 text-weight-bold">
+              {{ producto.nombre }}
+            </div>
+
+            <div class="producto-descripcion">
+              {{ producto.descripcion || 'Sin descripción' }}
+            </div>
+
+            <div class="q-mt-sm row q-gutter-xs">
+              <q-chip
+                dense
+                color="orange-1"
+                text-color="orange-10"
+                icon="inventory"
+              >
+                {{ etiquetaControlProducto(producto) }}
+              </q-chip>
+
+              <q-chip
+                v-if="producto.consume_carne"
+                dense
+                color="red-1"
+                text-color="red-10"
+                icon="local_fire_department"
+              >
+                Consume carne
+              </q-chip>
+
+              <q-chip
+                v-if="esProductoIndependiente(producto)"
+                dense
+                color="green-1"
+                text-color="green-10"
+                icon="restaurant"
+              >
+                Independiente
+              </q-chip>
+            </div>
+
+            <div
+              v-if="textoStockProducto(producto)"
+              class="q-mt-sm text-caption"
+              :class="
+                estaAgotado(producto)
+                  ? 'text-negative'
+                  : 'text-grey-7'
+              "
+            >
+              {{ textoStockProducto(producto) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="row items-center justify-between q-mt-md">
+          <div class="producto-precio">
+            Bs {{ formatoDinero(producto.precio) }}
+          </div>
+
+          <q-btn
+            color="primary"
+            icon="add_shopping_cart"
+            label="Agregar"
+            unelevated
+            dense
+            :disable="!puedeAgregarProducto(producto)"
+            @click="agregarProducto(producto)"
+          />
+        </div>
+      </q-card-section>
+    </q-card>
+  </div>
+</div>
           </q-card-section>
         </q-card>
       </div>

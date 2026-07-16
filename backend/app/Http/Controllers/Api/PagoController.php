@@ -25,7 +25,9 @@ class PagoController extends Controller
     {
         $empleado = $this->obtenerEmpleadoActivo($request);
 
-        $jornada = $this->obtenerJornadaAbierta($empleado->id_sucursal);
+        $jornada = $this->obtenerJornadaAbierta(
+            $empleado->id_sucursal
+        );
 
         $pedidos = Pedido::query()
             ->with([
@@ -51,7 +53,10 @@ class PagoController extends Controller
         int $idPedido
     ) {
         $usuario = $request->user('api');
-        $empleado = $this->obtenerEmpleadoActivo($request);
+
+        $empleado = $this->obtenerEmpleadoActivo(
+            $request
+        );
 
         $resultado = DB::transaction(function () use (
             $request,
@@ -64,15 +69,21 @@ class PagoController extends Controller
                 true
             );
 
-            $this->validarCajaAbierta(
+            $caja = $this->obtenerCajaAbierta(
                 $jornada->id_jornada,
                 $empleado->id_empleado
             );
 
             $pedido = Pedido::query()
                 ->where('id_pedido', $idPedido)
-                ->where('id_sucursal', $empleado->id_sucursal)
-                ->where('id_jornada', $jornada->id_jornada)
+                ->where(
+                    'id_sucursal',
+                    $empleado->id_sucursal
+                )
+                ->where(
+                    'id_jornada',
+                    $jornada->id_jornada
+                )
                 ->lockForUpdate()
                 ->first();
 
@@ -84,7 +95,10 @@ class PagoController extends Controller
                 ]);
             }
 
-            if (strtoupper((string) $pedido->estado) !== 'PENDIENTE') {
+            if (
+                strtoupper((string) $pedido->estado)
+                !== 'PENDIENTE'
+            ) {
                 throw ValidationException::withMessages([
                     'pedido' => [
                         'Solo se pueden pagar pedidos pendientes.',
@@ -93,7 +107,10 @@ class PagoController extends Controller
             }
 
             $pagoExistente = Pago::query()
-                ->where('id_pedido', $pedido->id_pedido)
+                ->where(
+                    'id_pedido',
+                    $pedido->id_pedido
+                )
                 ->lockForUpdate()
                 ->first();
 
@@ -110,10 +127,15 @@ class PagoController extends Controller
             );
 
             $montoEfectivoCentavos = (int) round(
-                (float) $request->input('monto_efectivo') * 100
+                (float) $request->input(
+                    'monto_efectivo'
+                ) * 100
             );
 
-            if ($montoEfectivoCentavos < $totalPedidoCentavos) {
+            if (
+                $montoEfectivoCentavos
+                < $totalPedidoCentavos
+            ) {
                 throw ValidationException::withMessages([
                     'monto_efectivo' => [
                         'El efectivo recibido no cubre el total del pedido.',
@@ -124,20 +146,40 @@ class PagoController extends Controller
             $pago = Pago::create([
                 'id_pedido' => $pedido->id_pedido,
                 'id_user_crea' => $usuario->id,
+
                 'monto_efectivo' => number_format(
                     $montoEfectivoCentavos / 100,
                     2,
                     '.',
                     ''
                 ),
+
                 'monto_qr' => '0.00',
+
                 'total_pagado' => number_format(
                     $totalPedidoCentavos / 100,
                     2,
                     '.',
                     ''
                 ),
+
                 'fecha' => now(),
+            ]);
+
+            // Se suma solo el valor real de la venta.
+            $nuevoTotalEfectivo = round(
+                (float) $caja->total_efectivo
+                + ($totalPedidoCentavos / 100),
+                2
+            );
+
+            $caja->update([
+                'total_efectivo' => number_format(
+                    $nuevoTotalEfectivo,
+                    2,
+                    '.',
+                    ''
+                ),
             ]);
 
             $pedido->update([
@@ -153,30 +195,49 @@ class PagoController extends Controller
                     'detalles.producto',
                     'detalles.guarniciones',
                 ])
-                ->where('id_pedido', $pedido->id_pedido)
+                ->where(
+                    'id_pedido',
+                    $pedido->id_pedido
+                )
                 ->first();
 
-            $tickets = $this->ticketService->generar($pedido);
+            $tickets = $this->ticketService
+                ->generar($pedido);
 
             return [
                 'pedido' => $pedido,
                 'pago' => $pago,
-                'ticket_cliente' => $tickets['ticket_cliente'],
-                'ficha_mesero' => $tickets['ficha_mesero'],
+
+                'caja' => $caja->fresh(),
+
+                'ticket_cliente' =>
+                    $tickets['ticket_cliente'],
+
+                'ficha_mesero' =>
+                    $tickets['ficha_mesero'],
             ];
         });
 
         return response()->json([
             'message' => 'Pago registrado correctamente.',
+
             'pedido' => $resultado['pedido'],
+
             'pago' => $resultado['pago'],
-            'ticket_cliente' => $resultado['ticket_cliente'],
-            'ficha_mesero' => $resultado['ficha_mesero'],
+
+            'caja' => $resultado['caja'],
+
+            'ticket_cliente' =>
+                $resultado['ticket_cliente'],
+
+            'ficha_mesero' =>
+                $resultado['ficha_mesero'],
         ], 201);
     }
 
-    private function obtenerEmpleadoActivo(Request $request): Empleado
-    {
+    private function obtenerEmpleadoActivo(
+        Request $request
+    ): Empleado {
         $usuario = $request->user('api');
 
         $empleado = Empleado::query()
@@ -191,7 +252,10 @@ class PagoController extends Controller
             ]);
         }
 
-        if (strtoupper((string) $empleado->estado) !== 'ACTIVO') {
+        if (
+            strtoupper((string) $empleado->estado)
+            !== 'ACTIVO'
+        ) {
             throw ValidationException::withMessages([
                 'empleado' => [
                     'El empleado se encuentra inactivo.',
@@ -215,8 +279,14 @@ class PagoController extends Controller
         bool $bloquear = false
     ): Jornada {
         $query = Jornada::query()
-            ->where('id_sucursal', $idSucursal)
-            ->whereDate('fecha', now()->toDateString())
+            ->where(
+                'id_sucursal',
+                $idSucursal
+            )
+            ->whereDate(
+                'fecha',
+                now()->toDateString()
+            )
             ->where('estado', 'ABIERTA');
 
         if ($bloquear) {
@@ -236,13 +306,19 @@ class PagoController extends Controller
         return $jornada;
     }
 
-    private function validarCajaAbierta(
+    private function obtenerCajaAbierta(
         int $idJornada,
         int $idEmpleado
-    ): void {
+    ): Caja {
         $caja = Caja::query()
-            ->where('id_jornada', $idJornada)
-            ->where('id_empleado', $idEmpleado)
+            ->where(
+                'id_jornada',
+                $idJornada
+            )
+            ->where(
+                'id_empleado',
+                $idEmpleado
+            )
             ->where('estado', 'ABIERTA')
             ->lockForUpdate()
             ->first();
@@ -254,5 +330,7 @@ class PagoController extends Controller
                 ],
             ]);
         }
+
+        return $caja;
     }
 }

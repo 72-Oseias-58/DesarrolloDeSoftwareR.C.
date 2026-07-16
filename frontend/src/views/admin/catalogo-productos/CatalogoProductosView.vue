@@ -4,12 +4,13 @@
       <div>
         <div class="text-h5 text-weight-bold">Catálogo de productos</div>
         <div class="text-grey-7">
-          Crea y edita platos, bebidas, imágenes, guarniciones y consumo de carne.
+          Administración de platos, bebidas, imágenes, guarniciones y consumos de carne.
         </div>
       </div>
 
       <div class="row q-gutter-sm">
         <q-btn
+          v-if="authStore.tienePermiso('crear_catalogo_pedidos')"
           color="primary"
           icon="restaurant"
           label="Nuevo plato"
@@ -18,6 +19,7 @@
         />
 
         <q-btn
+          v-if="authStore.tienePermiso('crear_catalogo_pedidos')"
           color="blue"
           icon="local_drink"
           label="Nueva bebida"
@@ -40,13 +42,9 @@
       <q-card-section>
         <div class="row items-center justify-between q-gutter-sm">
           <div>
-            <div class="text-h6 text-weight-bold">
-              Productos registrados
-            </div>
+            <div class="text-h6 text-weight-bold">Productos registrados</div>
 
-            <div class="text-grey-7">
-              Platos y bebidas que aparecen en nuevo pedido.
-            </div>
+            <div class="text-grey-7">Platos y bebidas que aparecen en nuevo pedido.</div>
           </div>
         </div>
       </q-card-section>
@@ -57,28 +55,17 @@
         <div v-if="cargandoProductos" class="estado-catalogo">
           <q-spinner color="primary" size="46px" />
 
-          <div class="q-mt-md text-grey-7">
-            Cargando productos...
-          </div>
+          <div class="q-mt-md text-grey-7">Cargando productos...</div>
         </div>
 
-        <q-banner
-          v-else-if="errorProductos"
-          rounded
-          class="bg-red-1 text-negative"
-        >
+        <q-banner v-else-if="errorProductos" rounded class="bg-red-1 text-negative">
           {{ errorProductos }}
         </q-banner>
 
-        <div
-          v-else-if="productos.length === 0"
-          class="estado-catalogo"
-        >
+        <div v-else-if="productos.length === 0" class="estado-catalogo">
           <q-icon name="inventory_2" size="54px" color="grey-5" />
 
-          <div class="q-mt-md text-grey-7">
-            No existen productos registrados.
-          </div>
+          <div class="q-mt-md text-grey-7">No existen productos registrados.</div>
         </div>
 
         <div v-else class="row q-col-gutter-md">
@@ -95,16 +82,8 @@
                 fit="cover"
               />
 
-              <div
-                v-else
-                class="row flex-center bg-grey-2"
-                style="height: 170px;"
-              >
-                <q-icon
-                  :name="iconoProducto(producto)"
-                  size="62px"
-                  color="grey-5"
-                />
+              <div v-else class="row flex-center bg-grey-2" style="height: 170px">
+                <q-icon :name="iconoProducto(producto)" size="62px" color="grey-5" />
               </div>
 
               <q-card-section>
@@ -129,14 +108,12 @@
                       Bs {{ formatoDinero(producto.precio) }}
                     </div>
 
-                    <div
-                      v-if="usaInventario(producto)"
-                      class="text-grey-8 q-mt-xs"
-                    >
+                    <div v-if="usaInventario(producto)" class="text-grey-8 q-mt-xs">
                       Stock:
-                      {{ producto.stock_actual === null || producto.stock_actual === undefined
-                        ? 'Sin inventario'
-                        : formatoCantidad(producto.stock_actual)
+                      {{
+                        producto.stock_actual === null || producto.stock_actual === undefined
+                          ? 'Sin inventario'
+                          : formatoCantidad(producto.stock_actual)
                       }}
                     </div>
 
@@ -150,12 +127,7 @@
                         {{ producto.tipo_producto }}
                       </q-chip>
 
-                      <q-chip
-                        dense
-                        color="orange-1"
-                        text-color="orange-10"
-                        icon="inventory"
-                      >
+                      <q-chip dense color="orange-1" text-color="orange-10" icon="inventory">
                         {{ producto.prioridad_stock || 'SIN_STOCK' }}
                       </q-chip>
 
@@ -173,7 +145,9 @@
                         v-if="usaInventario(producto)"
                         dense
                         :color="Number(producto.stock_actual || 0) <= 0 ? 'red-1' : 'green-1'"
-                        :text-color="Number(producto.stock_actual || 0) <= 0 ? 'negative' : 'positive'"
+                        :text-color="
+                          Number(producto.stock_actual || 0) <= 0 ? 'negative' : 'positive'
+                        "
                         :icon="Number(producto.stock_actual || 0) <= 0 ? 'block' : 'check_circle'"
                       >
                         {{ Number(producto.stock_actual || 0) <= 0 ? 'Agotado' : 'Disponible' }}
@@ -185,8 +159,15 @@
 
               <q-separator />
 
-              <q-card-actions align="right">
+              <q-card-actions
+                v-if="
+                  authStore.tienePermiso('editar_catalogo_pedidos') ||
+                  authStore.tienePermiso('eliminar_catalogo_pedidos')
+                "
+                align="right"
+              >
                 <q-btn
+                  v-if="authStore.tienePermiso('editar_catalogo_pedidos')"
                   flat
                   color="primary"
                   icon="edit"
@@ -195,6 +176,7 @@
                 />
 
                 <q-btn
+                  v-if="authStore.tienePermiso('eliminar_catalogo_pedidos')"
                   flat
                   color="negative"
                   icon="delete"
@@ -209,15 +191,13 @@
     </q-card>
 
     <q-dialog v-model="mostrarDialogoProducto" persistent>
-      <q-card style="width: 720px; max-width: 95vw;">
+      <q-card style="width: 720px; max-width: 95vw">
         <q-card-section>
           <div class="text-h6 text-weight-bold">
             {{ tituloDialogoProducto }}
           </div>
 
-          <div class="text-grey-7">
-            Este producto aparecerá en la pantalla de nuevo pedido.
-          </div>
+          <div class="text-grey-7">Este producto aparecerá en la pantalla de nuevo pedido.</div>
         </q-card-section>
 
         <q-separator />
@@ -270,13 +250,8 @@
               </q-file>
             </div>
 
-            <div
-              v-if="formProducto.imagen_url"
-              class="col-12"
-            >
-              <div class="text-weight-bold q-mb-sm">
-                Imagen actual
-              </div>
+            <div v-if="formProducto.imagen_url" class="col-12">
+              <div class="text-weight-bold q-mb-sm">Imagen actual</div>
 
               <q-img
                 :src="formProducto.imagen_url"
@@ -320,8 +295,8 @@
                     type="number"
                     min="0"
                     step="0.01"
-                    label="Consumo chancho"
-                    hint="Ej: 1.5 o 2 costillas/huesos"
+                    label="Consumo de chancho"
+                    hint="Cantidad de MinCostillas. Ej: 1.5, 2 o 3"
                   />
                 </div>
 
@@ -332,15 +307,13 @@
                     type="number"
                     min="0"
                     step="0.01"
-                    label="Consumo pollo"
-                    hint="Ej: 0.5 para medio pollo"
+                    label="Consumo de pollo"
+                    hint="Cantidad en pollos. Ej: 0.25, 0.5 o 1"
                   />
                 </div>
 
                 <div class="col-12">
-                  <div class="text-weight-bold q-mb-sm">
-                    Guarniciones disponibles
-                  </div>
+                  <div class="text-weight-bold q-mb-sm">Guarniciones disponibles</div>
 
                   <q-option-group
                     v-model="formProducto.guarniciones"
@@ -354,7 +327,8 @@
               <template v-if="esPlatoSinStock">
                 <div class="col-12">
                   <q-banner rounded class="bg-grey-2 text-grey-9">
-                    Usar para platos como chaquećan, sopa u otros platos que se venden sin controlar stock.
+                    Usar para platos como chaquećan, sopa u otros platos que se venden sin controlar
+                    stock.
                   </q-banner>
                 </div>
               </template>
@@ -363,8 +337,8 @@
             <template v-if="esDialogoBebida">
               <div class="col-12">
                 <q-banner rounded class="bg-blue-1 text-blue-10">
-                  La bebida tendrá control de stock. Se creará como producto de venta
-                  y también como insumo de inventario para la sucursal actual.
+                  La bebida tendrá control de stock. Se creará como producto de venta y también como
+                  insumo de inventario para la sucursal actual.
                 </q-banner>
               </div>
 
@@ -390,10 +364,7 @@
                 />
               </div>
 
-              <div
-                v-if="esDialogoEdicion"
-                class="col-12"
-              >
+              <div v-if="esDialogoEdicion" class="col-12">
                 <q-banner rounded class="bg-grey-2 text-grey-9">
                   Para aumentar o reducir stock usa el módulo Stock de bebidas.
                 </q-banner>
@@ -403,14 +374,14 @@
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn
-            flat
-            label="Cancelar"
-            color="grey-8"
-            @click="cerrarDialogoProducto"
-          />
+          <q-btn flat label="Cancelar" color="grey-8" @click="cerrarDialogoProducto" />
 
           <q-btn
+            v-if="
+              esDialogoEdicion
+                ? authStore.tienePermiso('editar_catalogo_pedidos')
+                : authStore.tienePermiso('crear_catalogo_pedidos')
+            "
             unelevated
             color="primary"
             icon="save"

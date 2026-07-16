@@ -1,7 +1,15 @@
-import { computed, defineComponent, onMounted, ref } from 'vue'
+import {
+  computed,
+  defineComponent,
+  onMounted,
+  ref,
+} from 'vue'
+
 import { useQuasar } from 'quasar'
 import { useAuthStore } from '@/stores/auth'
-import api from '@/api/axios'
+
+import jornadaService from './jornadaService'
+import { useCierreJornada } from './useCierreJornada'
 
 export default defineComponent({
   name: 'JornadasView',
@@ -25,19 +33,6 @@ export default defineComponent({
       pollo_cruces: null,
       observacion: '',
     })
-    const obtenerControlCarneJornada = () => {
-      if (!jornadaActual.value) {
-        return []
-      }
-
-      return (
-        jornadaActual.value.control_carne ||
-        jornadaActual.value.controlCarne ||
-        jornadaActual.value.controles_carne ||
-        jornadaActual.value.controlesCarne ||
-        []
-      )
-    }
 
     const columns = [
       {
@@ -65,6 +60,12 @@ export default defineComponent({
         field: 'estado',
         align: 'center',
       },
+      {
+        name: 'reporte',
+        label: 'Reporte',
+        field: 'reporte',
+        align: 'center',
+      },
     ]
 
     const textoJornadaActual = computed(() => {
@@ -80,11 +81,19 @@ export default defineComponent({
     })
 
     const baseChancho = computed(() => {
-  return Number(formApertura.value.chancho_cruces || 0) * 24
-})
+      return (
+        Number(
+          formApertura.value.chancho_cruces || 0,
+        ) * 24
+      )
+    })
 
     const basePollo = computed(() => {
-      return Number(formApertura.value.pollo_cruces || 0) * 2
+      return (
+        Number(
+          formApertura.value.pollo_cruces || 0,
+        ) * 2
+      )
     })
 
     const obtenerMensajeError = (error) => {
@@ -98,7 +107,10 @@ export default defineComponent({
         }
       }
 
-      return error.response?.data?.message || 'Ocurrió un error inesperado.'
+      return (
+        error.response?.data?.message ||
+        'Ocurrió un error inesperado.'
+      )
     }
 
     const normalizarNombre = (nombre) => {
@@ -109,20 +121,57 @@ export default defineComponent({
         .trim()
     }
 
+    const formatearFecha = (fecha) => {
+      if (!fecha) {
+        return 'No registrada'
+      }
+
+      return String(fecha).slice(0, 10)
+    }
+
+    const formatoCantidad = (cantidad) => {
+      const numero = Number(cantidad || 0)
+
+      if (Number.isInteger(numero)) {
+        return String(numero)
+      }
+
+      return numero.toFixed(2)
+    }
+
+    const obtenerControlCarneJornada = () => {
+      if (!jornadaActual.value) {
+        return []
+      }
+
+      return (
+        jornadaActual.value.control_carne ||
+        jornadaActual.value.controlCarne ||
+        jornadaActual.value.controles_carne ||
+        jornadaActual.value.controlesCarne ||
+        []
+      )
+    }
+
     const obtenerTipoCarnePorNombre = (nombre) => {
-      const nombreBuscado = normalizarNombre(nombre)
+      const buscado = normalizarNombre(nombre)
 
       return tiposCarne.value.find((tipo) => {
-        return normalizarNombre(tipo.nombre) === nombreBuscado
+        return (
+          normalizarNombre(tipo.nombre) === buscado
+        )
       })
     }
 
     const cargarTiposCarne = async () => {
       try {
-        const response = await api.get('/tipos-carne')
+        const data =
+          await jornadaService.obtenerTiposCarne()
 
-        tiposCarne.value = Array.isArray(response.data?.tipos_carne)
-          ? response.data.tipos_carne
+        tiposCarne.value = Array.isArray(
+          data?.tipos_carne,
+        )
+          ? data.tipos_carne
           : []
       } catch (error) {
         tiposCarne.value = []
@@ -131,7 +180,6 @@ export default defineComponent({
           type: 'negative',
           message: obtenerMensajeError(error),
           position: 'top',
-          timeout: 3500,
         })
       }
     }
@@ -140,16 +188,19 @@ export default defineComponent({
       loading.value = true
 
       try {
-        const response = await api.get('/jornadas/actual')
-        jornadaActual.value = response.data?.jornada || null
+        const data =
+          await jornadaService.obtenerActual()
+
+        jornadaActual.value =
+          data?.jornada || null
       } catch (error) {
+        jornadaActual.value = null
+
         q.notify({
           type: 'negative',
           message: obtenerMensajeError(error),
           position: 'top',
         })
-
-        jornadaActual.value = null
       } finally {
         loading.value = false
       }
@@ -159,19 +210,26 @@ export default defineComponent({
       loadingHistorial.value = true
 
       try {
-        const response = await api.get('/jornadas')
+        const data =
+          await jornadaService.obtenerHistorial()
 
-        const data = response.data?.jornadas
+        const resultado = data?.jornadas
 
-        jornadas.value = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []
+        jornadas.value = Array.isArray(
+          resultado?.data,
+        )
+          ? resultado.data
+          : Array.isArray(resultado)
+            ? resultado
+            : []
       } catch (error) {
+        jornadas.value = []
+
         q.notify({
           type: 'negative',
           message: obtenerMensajeError(error),
           position: 'top',
         })
-
-        jornadas.value = []
       } finally {
         loadingHistorial.value = false
       }
@@ -204,63 +262,89 @@ export default defineComponent({
     }
 
     const validarApertura = () => {
-      const chancho = Number(formApertura.value.chancho_cruces || 0)
-      const pollo = Number(formApertura.value.pollo_cruces || 0)
+      const chancho = Number(
+        formApertura.value.chancho_cruces || 0,
+      )
 
-      if (tiposCarne.value.length === 0) {
-        return 'No se cargaron los tipos de carne.'
-      }
+      const pollo = Number(
+        formApertura.value.pollo_cruces || 0,
+      )
 
       if (!obtenerTipoCarnePorNombre('CHANCHO')) {
-        return 'No existe el tipo de carne CHANCHO en la base de datos.'
+        return 'No existe el tipo CHANCHO.'
       }
 
       if (!obtenerTipoCarnePorNombre('POLLO')) {
-        return 'No existe el tipo de carne POLLO en la base de datos.'
+        return 'No existe el tipo POLLO.'
       }
 
       if (chancho <= 0) {
-        return 'Debes indicar cuántas cruces de chancho hay para vender.'
+        return 'Debes indicar las cruces de chancho.'
       }
 
       if (pollo <= 0) {
-        return 'Debes indicar cuántas cruces de pollo hay para vender.'
+        return 'Debes indicar las cruces de pollo.'
       }
 
       return null
     }
 
     const construirPayloadApertura = () => {
-      const tipoChancho = obtenerTipoCarnePorNombre('CHANCHO')
-      const tipoPollo = obtenerTipoCarnePorNombre('POLLO')
+      const tipoChancho =
+        obtenerTipoCarnePorNombre('CHANCHO')
 
-      const crucesChancho = Number(formApertura.value.chancho_cruces || 0)
-      const crucesPollo = Number(formApertura.value.pollo_cruces || 0)
+      const tipoPollo =
+        obtenerTipoCarnePorNombre('POLLO')
 
-      const observacionGeneral = formApertura.value.observacion?.trim() || null
+      const crucesChancho = Number(
+        formApertura.value.chancho_cruces || 0,
+      )
+
+      const crucesPollo = Number(
+        formApertura.value.pollo_cruces || 0,
+      )
+
+      const observacion =
+        formApertura.value.observacion?.trim() ||
+        null
 
       return {
         carnes: [
           {
-            id_tipo_carne: tipoChancho.id_tipo_carne,
-            cantidad_cruces: crucesChancho,
-            cantidad_base_inicial: crucesChancho * 24,
-            unidad_base: 'MIN_COSTILLA',
-            platos_estimados: crucesChancho * 24,
-            observacion: observacionGeneral,
+            id_tipo_carne:
+              tipoChancho.id_tipo_carne,
+
+            cantidad_cruces:
+              crucesChancho,
+
+            cantidad_base_inicial:
+              crucesChancho * 24,
+
+            unidad_base:
+              'MIN_COSTILLA',
+
+            platos_estimados:
+              crucesChancho * 24,
+
+            observacion,
           },
           {
-            id_tipo_carne: tipoPollo.id_tipo_carne,
-            cantidad_cruces: crucesPollo,
+            id_tipo_carne:
+              tipoPollo.id_tipo_carne,
 
-            // 1 cruz de pollo = 2 pollos.
-            cantidad_base_inicial: crucesPollo * 2,
-            unidad_base: 'POLLO',
+            cantidad_cruces:
+              crucesPollo,
 
-            // 1 pollo entero = 2 platos de pollo de 1/2 pollo.
-            platos_estimados: crucesPollo * 4,
+            cantidad_base_inicial:
+              crucesPollo * 2,
 
-            observacion: observacionGeneral,
+            unidad_base:
+              'POLLO',
+
+            platos_estimados:
+              crucesPollo * 4,
+
+            observacion,
           },
         ],
       }
@@ -274,7 +358,6 @@ export default defineComponent({
           type: 'negative',
           message: errorValidacion,
           position: 'top',
-          timeout: 3500,
         })
 
         return
@@ -283,44 +366,21 @@ export default defineComponent({
       procesando.value = true
 
       try {
-        const payload = construirPayloadApertura()
-        const response = await api.post('/jornadas/abrir', payload)
+        const data = await jornadaService.abrir(
+          construirPayloadApertura(),
+        )
 
-        jornadaActual.value = response.data?.jornada || null
-
-        q.notify({
-          type: 'positive',
-          message: response.data?.message || 'Jornada abierta correctamente.',
-          position: 'top',
-        })
+        jornadaActual.value =
+          data?.jornada || null
 
         mostrarDialogoApertura.value = false
         limpiarFormularioApertura()
 
-        await cargarHistorial()
-      } catch (error) {
-        q.notify({
-          type: 'negative',
-          message: obtenerMensajeError(error),
-          position: 'top',
-          timeout: 4000,
-        })
-      } finally {
-        procesando.value = false
-      }
-    }
-
-    const cerrarJornada = async () => {
-      procesando.value = true
-
-      try {
-        const response = await api.patch('/jornadas/cerrar')
-
-        jornadaActual.value = response.data?.jornada || null
-
         q.notify({
           type: 'positive',
-          message: response.data?.message || 'Jornada cerrada correctamente.',
+          message:
+            data?.message ||
+            'Jornada abierta correctamente.',
           position: 'top',
         })
 
@@ -334,26 +394,6 @@ export default defineComponent({
       } finally {
         procesando.value = false
       }
-    }
-    const rangoPlatosChancho = (control) => {
-      const nombre = normalizarNombre(
-        control?.tipo_carne?.nombre || control?.tipoCarne?.nombre || '',
-      )
-
-      if (nombre !== 'CHANCHO') {
-        return ''
-      }
-
-      const cruces = Number(control?.cantidad_cruces || 0)
-
-      if (cruces <= 0) {
-        return ''
-      }
-
-      const minimo = Math.round(cruces * 22)
-      const maximo = Math.round(cruces * 26)
-
-      return `${minimo} a ${maximo} platos aprox.`
     }
 
     const confirmarAbrirJornada = () => {
@@ -364,7 +404,6 @@ export default defineComponent({
           type: 'negative',
           message: errorValidacion,
           position: 'top',
-          timeout: 3500,
         })
 
         return
@@ -372,72 +411,42 @@ export default defineComponent({
 
       q.dialog({
         title: 'Confirmar apertura',
+
         message:
-          `Se abrirá la jornada con ${formatoCantidad(formApertura.value.chancho_cruces)} cruz/ces de chancho ` +
-          `y ${formatoCantidad(formApertura.value.pollo_cruces)} cruz/ces de pollo.`,
-        cancel: true,
+          `Se abrirá la jornada con ` +
+          `${formatoCantidad(
+            formApertura.value.chancho_cruces,
+          )} cruces de chancho y ` +
+          `${formatoCantidad(
+            formApertura.value.pollo_cruces,
+          )} cruces de pollo.`,
+
         persistent: true,
+
         ok: {
           label: 'Abrir',
           color: 'green',
         },
+
         cancel: {
           label: 'Cancelar',
-          color: 'grey',
           flat: true,
         },
-      }).onOk(() => {
-        abrirJornada()
-      })
+      }).onOk(abrirJornada)
     }
-
-    const confirmarCerrarJornada = () => {
-      q.dialog({
-        title: 'Cerrar jornada',
-        message:
-          '¿Deseas cerrar la jornada actual? Después no se podrá abrir otra jornada para la misma fecha.',
-        cancel: true,
-        persistent: true,
-        ok: {
-          label: 'Cerrar',
-          color: 'red',
-        },
-        cancel: {
-          label: 'Cancelar',
-          color: 'grey',
-          flat: true,
-        },
-      }).onOk(() => {
-        cerrarJornada()
-      })
-    }
-
-    const formatearFecha = (fecha) => {
-      if (!fecha) return 'No registrada'
-
-      return String(fecha).slice(0, 10)
-    }
-
-    const formatoCantidad = (cantidad) => {
-      const numero = Number(cantidad || 0)
-
-      if (Number.isInteger(numero)) {
-        return String(numero)
-      }
-
-      return numero.toFixed(2)
-    }
-
-    onMounted(async () => {
-      await Promise.all([cargarTiposCarne(), cargarJornadaActual(), cargarHistorial()])
-    })
 
     const nombreTipoCarne = (control) => {
-      return control?.tipo_carne?.nombre || control?.tipoCarne?.nombre || 'Carne'
+      return (
+        control?.tipo_carne?.nombre ||
+        control?.tipoCarne?.nombre ||
+        'Carne'
+      )
     }
 
     const unidadBaseCarne = (control) => {
-      const unidad = String(control?.unidad_base || '').toUpperCase()
+      const unidad = String(
+        control?.unidad_base || '',
+      ).toUpperCase()
 
       if (unidad === 'MIN_COSTILLA') {
         return 'MinCostillas'
@@ -451,52 +460,92 @@ export default defineComponent({
         return 'Pollos'
       }
 
-      return unidad || ''
+      return unidad
     }
+
     const esChanchoControl = (control) => {
-      const nombre = normalizarNombre(
-        control?.tipo_carne?.nombre || control?.tipoCarne?.nombre || '',
+      return (
+        normalizarNombre(
+          control?.tipo_carne?.nombre ||
+            control?.tipoCarne?.nombre,
+        ) === 'CHANCHO'
+      )
+    }
+
+    const costillasGrandesChancho = (
+      control,
+    ) => {
+      return esChanchoControl(control)
+        ? Number(control.cantidad_cruces || 0) * 2
+        : 0
+    }
+
+    const rangoMinCostillasChancho = (
+      control,
+    ) => {
+      const grandes =
+        costillasGrandesChancho(control)
+
+      return (
+        `${grandes * 11} a ${grandes * 13} ` +
+        `MinCostillas aprox.`
+      )
+    }
+
+    const rangoPlatosChancho = (control) => {
+      if (!esChanchoControl(control)) {
+        return ''
+      }
+
+      const cruces = Number(
+        control.cantidad_cruces || 0,
       )
 
-      return nombre === 'CHANCHO'
+      return (
+        `${Math.round(cruces * 22)} a ` +
+        `${Math.round(cruces * 26)} platos aprox.`
+      )
     }
 
-    const costillasGrandesChancho = (control) => {
-      if (!esChanchoControl(control)) {
-        return ''
-      }
+    const porcentajeRestanteCarne = (
+      control,
+    ) => {
+      const inicial = Number(
+        control?.cantidad_base_inicial || 0,
+      )
 
-      const cruces = Number(control?.cantidad_cruces || 0)
-
-      return cruces * 2
-    }
-
-    const rangoMinCostillasChancho = (control) => {
-      if (!esChanchoControl(control)) {
-        return ''
-      }
-
-      const costillasGrandes = costillasGrandesChancho(control)
-
-      const minimo = costillasGrandes * 11
-      const maximo = costillasGrandes * 13
-
-      return `${minimo} a ${maximo} MinCostillas aprox.`
-    }
-
-    const porcentajeRestanteCarne = (control) => {
-      const inicial = Number(control?.cantidad_base_inicial || 0)
-      const actual = Number(control?.cantidad_base_actual || 0)
+      const actual = Number(
+        control?.cantidad_base_actual || 0,
+      )
 
       if (inicial <= 0) {
         return 0
       }
 
-      return Math.max(0, Math.min(100, (actual / inicial) * 100))
+      return Math.max(
+        0,
+        Math.min(
+          100,
+          (actual / inicial) * 100,
+        ),
+      )
     }
 
+    const cierre = useCierreJornada({
+      jornadaActual,
+      cargarJornadaActual,
+      cargarHistorial,
+    })
+
+    onMounted(async () => {
+      await Promise.all([
+        cargarTiposCarne(),
+        cargarJornadaActual(),
+        cargarHistorial(),
+      ])
+    })
+
     return {
-      q,
       authStore,
 
       loading,
@@ -515,16 +564,11 @@ export default defineComponent({
       baseChancho,
       basePollo,
 
-      cargarTiposCarne,
-      cargarJornadaActual,
       cargarHistorial,
 
       abrirDialogoApertura,
       cerrarDialogoApertura,
-      abrirJornada,
-      cerrarJornada,
       confirmarAbrirJornada,
-      confirmarCerrarJornada,
 
       formatearFecha,
       formatoCantidad,
@@ -532,12 +576,13 @@ export default defineComponent({
       obtenerControlCarneJornada,
       nombreTipoCarne,
       unidadBaseCarne,
-      porcentajeRestanteCarne,
-
-      rangoPlatosChancho,
       esChanchoControl,
       costillasGrandesChancho,
       rangoMinCostillasChancho,
+      rangoPlatosChancho,
+      porcentajeRestanteCarne,
+
+      ...cierre,
     }
   },
 })

@@ -12,6 +12,22 @@
   border-radius: 14px;
 }
 
+.datos-recojo-banner {
+  border-left: 4px solid var(--q-primary);
+}
+
+:deep(.q-table__container) {
+  overflow-x: auto;
+}
+
+:deep(.q-table th) {
+  white-space: nowrap;
+}
+
+:deep(.q-table td) {
+  vertical-align: top;
+}
+
 @media (max-width: 600px) {
   .movimientos-carne-page {
     padding: 8px;
@@ -19,5 +35,9 @@
 
   .movimientos-carne-card {
     border-radius: 12px;
+  }
+
+  .datos-recojo-banner {
+    font-size: 13px;
   }
 }

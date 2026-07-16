@@ -137,4 +137,20 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
+    public function comprasInternasAutorizadas()
+{
+    return $this->hasMany(
+        CompraInterna::class,
+        'id_user_autoriza',
+        'id'
+    );
+}
+public function reportesCreados()
+{
+    return $this->hasMany(
+        Reporte::class,
+        'id_user_crea',
+        'id'
+    );
+}
 }

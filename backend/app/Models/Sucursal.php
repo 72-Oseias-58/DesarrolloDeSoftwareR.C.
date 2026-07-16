@@ -42,4 +42,12 @@ public function pedidos()
         'id_sucursal'
     );
 }
+public function reportes()
+{
+    return $this->hasMany(
+        Reporte::class,
+        'id_sucursal',
+        'id_sucursal'
+    );
+}
 }

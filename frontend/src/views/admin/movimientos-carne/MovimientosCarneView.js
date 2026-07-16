@@ -18,12 +18,14 @@ export default defineComponent({
 
     const loadingInicial = ref(false)
     const loadingMovimientos = ref(false)
+    const loadingEmpleados = ref(false)
     const guardando = ref(false)
     const mostrarDialogo = ref(false)
 
     const jornada = ref(null)
     const controlesCarne = ref([])
     const tiposCarne = ref([])
+    const empleados = ref([])
     const movimientos = ref([])
 
     const paginacion = ref({
@@ -38,10 +40,35 @@ export default defineComponent({
       motivo: null,
     })
 
+    const obtenerFechaHoraActual = () => {
+      const partes = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/La_Paz',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      }).formatToParts(new Date())
+
+      const valores = {}
+
+      partes.forEach((parte) => {
+        valores[parte.type] = parte.value
+      })
+
+      return (
+        `${valores.year}-${valores.month}-${valores.day}` +
+        `T${valores.hour}:${valores.minute}`
+      )
+    }
+
     const form = ref({
       id_tipo_carne: null,
       tipo_movimiento: 'ENTRADA',
       motivo: 'TIENDA_FAMILIAR',
+      id_empleado_recolector: null,
+      fecha_hora_recojo: obtenerFechaHoraActual(),
       unidad_registrada: null,
       cantidad_registrada: null,
       cantidad_base_real: null,
@@ -51,7 +78,7 @@ export default defineComponent({
     const columnas = [
       {
         name: 'fecha',
-        label: 'Fecha y hora',
+        label: 'Registrado en sistema',
         field: 'created_at',
         align: 'left',
       },
@@ -71,6 +98,18 @@ export default defineComponent({
         name: 'motivo',
         label: 'Motivo',
         field: 'motivo',
+        align: 'left',
+      },
+      {
+        name: 'empleado_recolector',
+        label: 'Empleado recolector',
+        field: 'empleado_recolector',
+        align: 'left',
+      },
+      {
+        name: 'fecha_hora_recojo',
+        label: 'Fecha y hora de recojo',
+        field: 'fecha_hora_recojo',
         align: 'left',
       },
       {
@@ -159,6 +198,17 @@ export default defineComponent({
       }))
     })
 
+    const opcionesEmpleadoRecolector = computed(() => {
+      return empleados.value
+        .filter((empleado) => {
+          return empleado.estado === 'ACTIVO'
+        })
+        .map((empleado) => ({
+          label: `${empleado.nombre} — ${empleado.cargo}`,
+          value: empleado.id_empleado,
+        }))
+    })
+
     const tipoCarneSeleccionado = computed(() => {
       return tiposCarne.value.find(
         (tipo) =>
@@ -173,6 +223,10 @@ export default defineComponent({
       )
         .toUpperCase()
         .trim()
+    })
+
+    const mostrarDatosRecojo = computed(() => {
+      return form.value.motivo === 'TIENDA_FAMILIAR'
     })
 
     const opcionesUnidad = computed(() => {
@@ -219,7 +273,9 @@ export default defineComponent({
     })
 
     const requiereObservacion = computed(() => {
-      return ['AJUSTE', 'MERMA'].includes(form.value.motivo)
+      return ['AJUSTE', 'MERMA'].includes(
+        form.value.motivo,
+      )
     })
 
     const textoConversion = computed(() => {
@@ -231,7 +287,10 @@ export default defineComponent({
         return 'Selecciona el tipo de carne para calcular la equivalencia.'
       }
 
-      if (!form.value.unidad_registrada || cantidad <= 0) {
+      if (
+        !form.value.unidad_registrada ||
+        cantidad <= 0
+      ) {
         return 'Selecciona la unidad e ingresa una cantidad.'
       }
 
@@ -303,6 +362,22 @@ export default defineComponent({
         : []
     }
 
+    const cargarEmpleados = async () => {
+      loadingEmpleados.value = true
+
+      try {
+        const response = await api.get('/empleados')
+
+        empleados.value = Array.isArray(
+          response.data?.empleados,
+        )
+          ? response.data.empleados
+          : []
+      } finally {
+        loadingEmpleados.value = false
+      }
+    }
+
     const cargarJornada = async () => {
       const response = await api.get('/jornadas/actual')
 
@@ -337,7 +412,10 @@ export default defineComponent({
     }
 
     const cargarMovimientos = async (pagina = 1) => {
-      if (!jornada.value || jornada.value.estado !== 'ABIERTA') {
+      if (
+        !jornada.value ||
+        jornada.value.estado !== 'ABIERTA'
+      ) {
         movimientos.value = []
         return
       }
@@ -354,13 +432,19 @@ export default defineComponent({
 
         const resultado = response.data?.movimientos
 
-        movimientos.value = Array.isArray(resultado?.data)
+        movimientos.value = Array.isArray(
+          resultado?.data,
+        )
           ? resultado.data
           : []
 
         paginacion.value = {
-          current_page: Number(resultado?.current_page || 1),
-          last_page: Number(resultado?.last_page || 1),
+          current_page: Number(
+            resultado?.current_page || 1,
+          ),
+          last_page: Number(
+            resultado?.last_page || 1,
+          ),
           total: Number(resultado?.total || 0),
         }
       } catch (error) {
@@ -380,7 +464,11 @@ export default defineComponent({
       loadingInicial.value = true
 
       try {
-        await cargarTiposCarne()
+        await Promise.all([
+          cargarTiposCarne(),
+          cargarEmpleados(),
+        ])
+
         await cargarJornada()
 
         if (jornada.value?.estado === 'ABIERTA') {
@@ -407,6 +495,8 @@ export default defineComponent({
         id_tipo_carne: null,
         tipo_movimiento: 'ENTRADA',
         motivo: 'TIENDA_FAMILIAR',
+        id_empleado_recolector: null,
+        fecha_hora_recojo: obtenerFechaHoraActual(),
         unidad_registrada: null,
         cantidad_registrada: null,
         cantidad_base_real: null,
@@ -437,6 +527,14 @@ export default defineComponent({
       if (form.value.motivo === 'MERMA') {
         form.value.tipo_movimiento = 'SALIDA'
       }
+
+      if (form.value.motivo !== 'TIENDA_FAMILIAR') {
+        form.value.id_empleado_recolector = null
+        form.value.fecha_hora_recojo = null
+      } else {
+        form.value.fecha_hora_recojo =
+          obtenerFechaHoraActual()
+      }
     }
 
     const validarFormulario = () => {
@@ -452,12 +550,28 @@ export default defineComponent({
         return 'Debe seleccionar el motivo.'
       }
 
+      if (
+        mostrarDatosRecojo.value &&
+        !form.value.id_empleado_recolector
+      ) {
+        return 'Debe seleccionar al empleado que recogió la carne.'
+      }
+
+      if (
+        mostrarDatosRecojo.value &&
+        !form.value.fecha_hora_recojo
+      ) {
+        return 'Debe indicar la fecha y hora del recojo.'
+      }
+
       if (!form.value.unidad_registrada) {
         return 'Debe seleccionar la unidad.'
       }
 
       if (
-        Number(form.value.cantidad_registrada || 0) <= 0
+        Number(
+          form.value.cantidad_registrada || 0,
+        ) <= 0
       ) {
         return 'La cantidad debe ser mayor a cero.'
       }
@@ -477,7 +591,8 @@ export default defineComponent({
         id_tipo_carne: form.value.id_tipo_carne,
         tipo_movimiento: form.value.tipo_movimiento,
         motivo: form.value.motivo,
-        unidad_registrada: form.value.unidad_registrada,
+        unidad_registrada:
+          form.value.unidad_registrada,
         cantidad_registrada: Number(
           form.value.cantidad_registrada,
         ),
@@ -486,9 +601,20 @@ export default defineComponent({
           null,
       }
 
+      if (mostrarDatosRecojo.value) {
+        payload.id_empleado_recolector =
+          form.value.id_empleado_recolector
+
+        payload.fecha_hora_recojo = String(
+          form.value.fecha_hora_recojo,
+        ).replace('T', ' ')
+      }
+
       if (
         mostrarCantidadReal.value &&
-        Number(form.value.cantidad_base_real || 0) > 0
+        Number(
+          form.value.cantidad_base_real || 0,
+        ) > 0
       ) {
         payload.cantidad_base_real = Number(
           form.value.cantidad_base_real,
@@ -557,12 +683,30 @@ export default defineComponent({
         return
       }
 
+      const empleado = empleados.value.find(
+        (item) =>
+          Number(item.id_empleado) ===
+          Number(form.value.id_empleado_recolector),
+      )
+
+      let detalleRecojo = ''
+
+      if (mostrarDatosRecojo.value && empleado) {
+        detalleRecojo =
+          ` Empleado recolector: ${empleado.nombre}.`
+      }
+
       q.dialog({
         title: 'Confirmar movimiento',
         message:
           `Se registrará una ${form.value.tipo_movimiento} de ` +
-          `${formatoCantidad(form.value.cantidad_registrada)} ` +
-          `${textoUnidad(form.value.unidad_registrada)}.`,
+          `${formatoCantidad(
+            form.value.cantidad_registrada,
+          )} ` +
+          `${textoUnidad(
+            form.value.unidad_registrada,
+          )}.` +
+          detalleRecojo,
         cancel: true,
         persistent: true,
         ok: {
@@ -618,7 +762,10 @@ export default defineComponent({
         POLLO: 'pollos',
       }
 
-      return textos[unidadNormalizada] || unidadNormalizada
+      return (
+        textos[unidadNormalizada] ||
+        unidadNormalizada
+      )
     }
 
     const textoMotivo = (motivo) => {
@@ -663,6 +810,7 @@ export default defineComponent({
 
       loadingInicial,
       loadingMovimientos,
+      loadingEmpleados,
       guardando,
       mostrarDialogo,
 
@@ -678,8 +826,10 @@ export default defineComponent({
       opcionesMotivoRegistro,
       opcionesMotivoFiltro,
       opcionesTipoCarne,
+      opcionesEmpleadoRecolector,
       opcionesUnidad,
 
+      mostrarDatosRecojo,
       mostrarCantidadReal,
       requiereObservacion,
       textoConversion,

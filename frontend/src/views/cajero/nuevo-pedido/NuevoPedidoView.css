@@ -105,4 +105,30 @@
   .producto-descripcion {
     min-height: auto;
   }
+  .productos-tabs {
+  background: rgba(217, 34, 67, 0.04);
+}
+
+.productos-tabs :deep(.q-tab) {
+  min-height: 56px;
+  font-weight: 700;
+}
+
+.productos-tabs :deep(.q-tab__icon) {
+  font-size: 25px;
+}
+
+.productos-tabs :deep(.q-tab--active) {
+  background: rgba(217, 34, 67, 0.08);
+}
+
+@media (max-width: 600px) {
+  .productos-tabs :deep(.q-tab) {
+    min-height: 52px;
+  }
+
+  .productos-tabs :deep(.q-tab__label) {
+    font-size: 12px;
+  }
+}
 }

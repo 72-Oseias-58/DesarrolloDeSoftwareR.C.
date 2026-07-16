@@ -13,42 +13,45 @@ class PermisosStockBebidasSeeder extends Seeder
             [
                 'nombre' => 'Ver stock de bebidas',
                 'slug' => 'ver_stock_bebidas',
+                'descripcion' => 'Permite consultar el stock de bebidas',
             ],
             [
                 'nombre' => 'Mover stock de bebidas',
                 'slug' => 'mover_stock_bebidas',
+                'descripcion' => 'Permite registrar movimientos de bebidas',
             ],
         ];
 
+        $rolesPermitidos = DB::table('roles')
+            ->whereIn('nombre', [
+                'ADMIN',
+                'CAJERO',
+            ])
+            ->pluck('id_rol');
+
         foreach ($permisos as $permiso) {
+            DB::table('permisos')->updateOrInsert(
+                ['slug' => $permiso['slug']],
+                [
+                    'nombre' => $permiso['nombre'],
+                    'descripcion' => $permiso['descripcion'],
+                    'updated_at' => now(),
+                ]
+            );
+
             $idPermiso = DB::table('permisos')
                 ->where('slug', $permiso['slug'])
                 ->value('id_permiso');
 
             if (!$idPermiso) {
-                $idPermiso = DB::table('permisos')->insertGetId([
-                    'nombre' => $permiso['nombre'],
-                    'slug' => $permiso['slug'],
-                ]);
+                continue;
             }
 
-            $rolesPermitidos = [
-                2, // ADMIN
-                3, // CAJERO
-            ];
-
             foreach ($rolesPermitidos as $idRol) {
-                $existe = DB::table('permiso_rol')
-                    ->where('id_rol', $idRol)
-                    ->where('id_permiso', $idPermiso)
-                    ->exists();
-
-                if (!$existe) {
-                    DB::table('permiso_rol')->insert([
-                        'id_rol' => $idRol,
-                        'id_permiso' => $idPermiso,
-                    ]);
-                }
+                DB::table('permiso_rol')->updateOrInsert([
+                    'id_rol' => $idRol,
+                    'id_permiso' => $idPermiso,
+                ]);
             }
         }
     }

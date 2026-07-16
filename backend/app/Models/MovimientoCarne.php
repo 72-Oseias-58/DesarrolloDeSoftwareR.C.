@@ -21,6 +21,8 @@ class MovimientoCarne extends Model
         'id_jornada',
         'id_tipo_carne',
         'id_user_crea',
+        'id_empleado_recolector',
+        'fecha_hora_recojo',
         'tipo_movimiento',
         'motivo',
         'unidad_registrada',
@@ -37,6 +39,8 @@ class MovimientoCarne extends Model
     ];
 
     protected $casts = [
+        'id_empleado_recolector' => 'integer',
+        'fecha_hora_recojo' => 'datetime',
         'cantidad_registrada' => 'decimal:2',
         'cantidad_base' => 'decimal:2',
         'cantidad_anterior' => 'decimal:2',
@@ -86,6 +90,15 @@ class MovimientoCarne extends Model
             User::class,
             'id_user_crea',
             'id'
+        );
+    }
+
+    public function empleadoRecolector(): BelongsTo
+    {
+        return $this->belongsTo(
+            Empleado::class,
+            'id_empleado_recolector',
+            'id_empleado'
         );
     }
 

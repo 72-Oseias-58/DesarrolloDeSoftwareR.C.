@@ -1,0 +1,31 @@
+.reportes-sucursales-card {
+  border-radius: 22px;
+}
+
+.detalle-superadmin-card {
+  width: 760px;
+  max-width: 96vw;
+  border-radius: 20px;
+}
+
+.detalle-linea {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+}
+
+.detalle-linea.resultado {
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(33, 150, 243, 0.08);
+  font-size: 17px;
+}
+
+@media (max-width: 600px) {
+  .detalle-linea {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

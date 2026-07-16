@@ -25,71 +25,75 @@ class TicketService
 
     private function generarTicketCliente(Pedido $pedido): array
     {
-        $platos = [];
+        $platosAgrupados = [];
         $puraCarne = [];
-        $bebidas = [];
+        $bebidasAgrupadas = [];
 
-        $numeroPlato = 1;
-        $numeroPuraCarne = 1;
+        /*
+        |--------------------------------------------------------------------------
+        | Procesar detalles del pedido
+        |--------------------------------------------------------------------------
+        */
 
         foreach ($pedido->detalles as $detalle) {
             if ($this->esBebida($detalle)) {
-                $clave = $this->claveBebida($detalle);
-
-                if (!isset($bebidas[$clave])) {
-                    $bebidas[$clave] = [
-                        'cantidad' => 0,
-                        'nombre' => $this->nombreDetalle($detalle),
-                        'precio_unitario' => (float) $detalle->precio_unitario,
-                        'subtotal' => 0,
-                    ];
-                }
-
-                $bebidas[$clave]['cantidad'] += (int) $detalle->cantidad;
-                $bebidas[$clave]['subtotal'] += (float) $detalle->subtotal;
+                $this->agruparBebida(
+                    $bebidasAgrupadas,
+                    $detalle
+                );
 
                 continue;
             }
 
             if ((bool) $detalle->es_pura_carne) {
-                $puraCarne[] = [
-                    'numero' => $numeroPuraCarne,
-                    'nombre' => $this->nombreDetalle($detalle),
-                    'precio' => (float) $detalle->precio_unitario,
-                    'observacion' => $detalle->observacion,
-                ];
-
-                $numeroPuraCarne++;
+                $puraCarne[] = $this->prepararPuraCarne(
+                    $detalle
+                );
 
                 continue;
             }
 
-            $cantidad = max(1, (int) $detalle->cantidad);
-
-            for ($i = 1; $i <= $cantidad; $i++) {
-                $guarniciones = $detalle
-                    ->guarniciones
-                    ->pluck('nombre')
-                    ->values()
-                    ->toArray();
-
-                $platos[] = [
-                    'numero' => $numeroPlato,
-                    'nombre' => $this->nombreDetalle($detalle),
-                    'precio' => (float) $detalle->precio_unitario,
-                    'preparacion' => $this->nombrePreparacion($detalle),
-                    'guarniciones' => $guarniciones,
-                    'guarniciones_texto' => implode(' | ', $guarniciones),
-                    'observacion' => $detalle->observacion,
-                ];
-
-                $numeroPlato++;
-            }
+            $this->agruparPlato(
+                $platosAgrupados,
+                $detalle
+            );
         }
 
+        $platos = $this->numerarElementos(
+            array_values($platosAgrupados)
+        );
+
+        $puraCarne = $this->numerarElementos(
+            array_values($puraCarne)
+        );
+
+        $bebidas = array_values($bebidasAgrupadas);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Datos del pago
+        |--------------------------------------------------------------------------
+        */
+
         $pago = $pedido->pago;
-        $totalPedido = (float) $pedido->total;
-        $dineroRecibido = $pago ? (float) $pago->monto_efectivo : 0;
+
+        $totalPedido = round(
+            (float) $pedido->total,
+            2
+        );
+
+        $dineroRecibido = $pago
+            ? round((float) $pago->monto_efectivo, 2)
+            : 0;
+
+        $totalPagado = $pago
+            ? round((float) $pago->total_pagado, 2)
+            : $totalPedido;
+
+        $cambio = max(
+            0,
+            round($dineroRecibido - $totalPedido, 2)
+        );
 
         return [
             'restaurante' => 'RINCÓN CHAQUEÑO',
@@ -100,37 +104,223 @@ class TicketService
 
             'platos' => $platos,
             'pura_carne' => $puraCarne,
-            'bebidas' => array_values($bebidas),
+            'bebidas' => $bebidas,
 
             'subtotal_productos' => $totalPedido,
-            'total_pagado' => $pago ? (float) $pago->total_pagado : $totalPedido,
-            'metodo_pago' => $pago ? $pago->metodo_pago : 'EFECTIVO',
+            'total_pagado' => $totalPagado,
+            'metodo_pago' => $pago?->metodo_pago ?? 'EFECTIVO',
             'dinero_recibido' => $dineroRecibido,
-            'cambio' => max(0, $dineroRecibido - $totalPedido),
+            'cambio' => $cambio,
 
-            'mensaje_revision' => 'Revise que los productos, guarniciones y observaciones sean correctos.',
-            'mensaje_conservar' => 'Conserve este ticket hasta recibir su pedido.',
+            /*
+            |--------------------------------------------------------------------------
+            | Pie publicitario
+            |--------------------------------------------------------------------------
+            */
+
+            'mensaje_gracias' =>
+                '¡Gracias por compartir el sabor de Rincón Chaqueño!',
+
+            'mensaje_contacto' =>
+                'Pedidos y reservas: 12345678',
+
+            'mensaje_publicidad' =>
+                'Donde cada plato reúne sabor, familia y tradición.',
+
+            'mensaje_slogan' =>
+                '¡Tradición que se saborea!',
         ];
     }
 
-    private function generarFichaMesero(Pedido $pedido): array
-    {
+    private function agruparPlato(
+        array &$platosAgrupados,
+        DetallePedido $detalle
+    ): void {
+        $guarniciones = $detalle
+            ->guarniciones
+            ->pluck('nombre')
+            ->map(fn ($nombre) => trim((string) $nombre))
+            ->filter()
+            ->values()
+            ->toArray();
+
+        $preparacion = $this->nombrePreparacion(
+            $detalle
+        );
+
+        $clave = $this->clavePlato(
+            $detalle,
+            $guarniciones,
+            $preparacion
+        );
+
+        $cantidad = max(
+            1,
+            (int) $detalle->cantidad
+        );
+
+        $precioUnitario = round(
+            (float) $detalle->precio_unitario,
+            2
+        );
+
+        $subtotalDetalle = round(
+            (float) $detalle->subtotal,
+            2
+        );
+
+        if (!isset($platosAgrupados[$clave])) {
+            $platosAgrupados[$clave] = [
+                'cantidad' => 0,
+                'nombre' => $this->nombreDetalle($detalle),
+                'precio_unitario' => $precioUnitario,
+                'subtotal' => 0,
+                'preparacion' => $preparacion,
+                'guarniciones' => $guarniciones,
+                'guarniciones_texto' => implode(
+                    ' | ',
+                    $guarniciones
+                ),
+                'observacion' => $detalle->observacion,
+            ];
+        }
+
+        $platosAgrupados[$clave]['cantidad'] += $cantidad;
+
+        $platosAgrupados[$clave]['subtotal'] = round(
+            (float) $platosAgrupados[$clave]['subtotal']
+            + $subtotalDetalle,
+            2
+        );
+    }
+
+    private function agruparBebida(
+        array &$bebidasAgrupadas,
+        DetallePedido $detalle
+    ): void {
+        $clave = $this->claveBebida(
+            $detalle
+        );
+
+        $cantidad = max(
+            1,
+            (int) $detalle->cantidad
+        );
+
+        $precioUnitario = round(
+            (float) $detalle->precio_unitario,
+            2
+        );
+
+        $subtotalDetalle = round(
+            (float) $detalle->subtotal,
+            2
+        );
+
+        if (!isset($bebidasAgrupadas[$clave])) {
+            $bebidasAgrupadas[$clave] = [
+                'cantidad' => 0,
+                'nombre' => $this->nombreDetalle($detalle),
+                'precio_unitario' => $precioUnitario,
+                'subtotal' => 0,
+                'observacion' => $detalle->observacion,
+            ];
+        }
+
+        $bebidasAgrupadas[$clave]['cantidad'] += $cantidad;
+
+        $bebidasAgrupadas[$clave]['subtotal'] = round(
+            (float) $bebidasAgrupadas[$clave]['subtotal']
+            + $subtotalDetalle,
+            2
+        );
+    }
+
+    private function prepararPuraCarne(
+        DetallePedido $detalle
+    ): array {
+        return [
+            'cantidad' => max(
+                1,
+                (int) $detalle->cantidad
+            ),
+
+            'nombre' => $this->nombreDetalle($detalle),
+
+            'precio_unitario' => round(
+                (float) $detalle->precio_unitario,
+                2
+            ),
+
+            'subtotal' => round(
+                (float) $detalle->subtotal,
+                2
+            ),
+
+            /*
+             * Se mantiene también "precio" para no romper
+             * el frontend actual mientras se actualiza.
+             */
+            'precio' => round(
+                (float) $detalle->subtotal,
+                2
+            ),
+
+            'tipo_carne_manual' =>
+                $detalle->tipo_carne_manual,
+
+            'cantidad_carne_manual' =>
+                $detalle->cantidad_carne_manual,
+
+            'unidad_carne_manual' =>
+                $detalle->unidad_carne_manual,
+
+            'observacion' => $detalle->observacion,
+        ];
+    }
+
+    private function numerarElementos(
+        array $elementos
+    ): array {
+        return collect($elementos)
+            ->values()
+            ->map(function (
+                array $elemento,
+                int $indice
+            ) {
+                $elemento['numero'] = $indice + 1;
+
+                return $elemento;
+            })
+            ->all();
+    }
+
+    private function generarFichaMesero(
+        Pedido $pedido
+    ): array {
         $cantidadPlatos = 0;
         $cantidadPuraCarne = 0;
         $cantidadBebidas = 0;
 
         foreach ($pedido->detalles as $detalle) {
+            $cantidad = max(
+                1,
+                (int) $detalle->cantidad
+            );
+
             if ($this->esBebida($detalle)) {
-                $cantidadBebidas += (int) $detalle->cantidad;
+                $cantidadBebidas += $cantidad;
+
                 continue;
             }
 
             if ((bool) $detalle->es_pura_carne) {
-                $cantidadPuraCarne++;
+                $cantidadPuraCarne += $cantidad;
+
                 continue;
             }
 
-            $cantidadPlatos += max(1, (int) $detalle->cantidad);
+            $cantidadPlatos += $cantidad;
         }
 
         return [
@@ -142,32 +332,52 @@ class TicketService
         ];
     }
 
-    private function esBebida(DetallePedido $detalle): bool
-    {
-        return strtoupper((string) $detalle->producto?->tipo_producto) === 'BEBIDA';
+    private function esBebida(
+        DetallePedido $detalle
+    ): bool {
+        return strtoupper(
+            trim(
+                (string) $detalle
+                    ->producto
+                    ?->tipo_producto
+            )
+        ) === 'BEBIDA';
     }
 
-    private function nombreDetalle(DetallePedido $detalle): string
-    {
+    private function nombreDetalle(
+        DetallePedido $detalle
+    ): string {
         if ((bool) $detalle->es_pura_carne) {
-            $tipo = strtoupper((string) $detalle->tipo_carne_manual);
+            $tipo = strtoupper(
+                trim(
+                    (string) $detalle->tipo_carne_manual
+                )
+            );
 
             return $tipo === 'POLLO'
                 ? 'Pura carne de pollo'
                 : 'Pura carne de chancho';
         }
 
-        return $detalle->producto?->nombre ?? 'Producto';
+        return $detalle->producto?->nombre
+            ?? 'Producto';
     }
 
-    private function nombrePreparacion(DetallePedido $detalle): string
-    {
+    private function nombrePreparacion(
+        DetallePedido $detalle
+    ): string {
         $seleccionadas = $detalle
             ->guarniciones
             ->pluck('nombre')
-            ->map(fn ($nombre) => $this->normalizar($nombre))
-            ->values()
+            ->map(
+                fn ($nombre) =>
+                    $this->normalizar(
+                        (string) $nombre
+                    )
+            )
+            ->filter()
             ->sort()
+            ->values()
             ->toArray();
 
         if (empty($seleccionadas)) {
@@ -178,11 +388,21 @@ class TicketService
             ->producto
             ?->guarniciones
             ?->pluck('nombre')
-            ?->map(fn ($nombre) => $this->normalizar($nombre))
+            ?->map(
+                fn ($nombre) =>
+                    $this->normalizar(
+                        (string) $nombre
+                    )
+            )
+            ?->filter()
             ?->values()
             ?->toArray() ?? [];
 
-        $mixto = ['ARROZ', 'MOTE'];
+        $mixto = [
+            'ARROZ',
+            'MOTE',
+        ];
+
         sort($mixto);
 
         if ($seleccionadas === $mixto) {
@@ -190,41 +410,103 @@ class TicketService
         }
 
         $arrozCompleto = collect($permitidas)
-            ->filter(fn ($nombre) => $nombre !== 'MOTE')
-            ->values()
+            ->filter(
+                fn ($nombre) =>
+                    $nombre !== 'MOTE'
+            )
             ->sort()
+            ->values()
             ->toArray();
 
         $moteCompleto = collect($permitidas)
-            ->filter(fn ($nombre) => $nombre !== 'ARROZ')
-            ->values()
+            ->filter(
+                fn ($nombre) =>
+                    $nombre !== 'ARROZ'
+            )
             ->sort()
+            ->values()
             ->toArray();
 
-        if (count($arrozCompleto) > 1 && $seleccionadas === $arrozCompleto) {
+        if (
+            count($arrozCompleto) > 1 &&
+            $seleccionadas === $arrozCompleto
+        ) {
             return 'Arroz completo';
         }
 
-        if (count($moteCompleto) > 1 && $seleccionadas === $moteCompleto) {
+        if (
+            count($moteCompleto) > 1 &&
+            $seleccionadas === $moteCompleto
+        ) {
             return 'Mote completo';
         }
 
         return '';
     }
 
-    private function claveBebida(DetallePedido $detalle): string
-    {
-        return implode('|', [
-            $detalle->id_producto,
-            $detalle->precio_unitario,
-            $detalle->observacion,
+    private function clavePlato(
+        DetallePedido $detalle,
+        array $guarniciones,
+        string $preparacion
+    ): string {
+        $guarnicionesNormalizadas = collect(
+            $guarniciones
+        )
+            ->map(
+                fn ($nombre) =>
+                    $this->normalizar(
+                        (string) $nombre
+                    )
+            )
+            ->sort()
+            ->values()
+            ->implode('|');
+
+        return implode('::', [
+            (string) $detalle->id_producto,
+
+            number_format(
+                (float) $detalle->precio_unitario,
+                2,
+                '.',
+                ''
+            ),
+
+            $this->normalizar($preparacion),
+
+            $guarnicionesNormalizadas,
+
+            $this->normalizar(
+                (string) ($detalle->observacion ?? '')
+            ),
         ]);
     }
 
-    private function fechaBolivia(Pedido $pedido): string
-    {
+    private function claveBebida(
+        DetallePedido $detalle
+    ): string {
+        return implode('::', [
+            (string) $detalle->id_producto,
+
+            number_format(
+                (float) $detalle->precio_unitario,
+                2,
+                '.',
+                ''
+            ),
+
+            $this->normalizar(
+                (string) ($detalle->observacion ?? '')
+            ),
+        ]);
+    }
+
+    private function fechaBolivia(
+        Pedido $pedido
+    ): string {
         if (!$pedido->fecha) {
-            return now('America/La_Paz')->format('d/m/Y - H:i');
+            return now('America/La_Paz')
+                ->format('d/m/Y - H:i');
         }
 
         return $pedido
@@ -233,23 +515,32 @@ class TicketService
             ->format('d/m/Y - H:i');
     }
 
-    private function nombreCajero(Pedido $pedido): string
-    {
+    private function nombreCajero(
+        Pedido $pedido
+    ): string {
         $cajero = $pedido->cajero;
 
         if (!$cajero) {
             return 'Cajero';
         }
 
-        foreach (['nombre_completo', 'nombres', 'nombre', 'usuario'] as $campo) {
+        foreach (
+            [
+                'nombre_completo',
+                'nombres',
+                'nombre',
+                'usuario',
+            ] as $campo
+        ) {
             if (!empty($cajero->{$campo})) {
                 return (string) $cajero->{$campo};
             }
         }
 
         $nombreCompleto = trim(
-            ((string) ($cajero->nombre ?? '')) . ' ' .
-            ((string) ($cajero->apellido ?? ''))
+            ((string) ($cajero->nombre ?? ''))
+            . ' '
+            . ((string) ($cajero->apellido ?? ''))
         );
 
         return $nombreCompleto !== ''
@@ -257,13 +548,40 @@ class TicketService
             : 'Cajero';
     }
 
-    private function normalizar(string $texto): string
-    {
+    private function normalizar(
+        string $texto
+    ): string {
         $texto = trim($texto);
 
         $texto = str_replace(
-            ['á', 'é', 'í', 'ó', 'ú', 'ñ', 'Á', 'É', 'Í', 'Ó', 'Ú', 'Ñ'],
-            ['a', 'e', 'i', 'o', 'u', 'n', 'A', 'E', 'I', 'O', 'U', 'N'],
+            [
+                'á',
+                'é',
+                'í',
+                'ó',
+                'ú',
+                'ñ',
+                'Á',
+                'É',
+                'Í',
+                'Ó',
+                'Ú',
+                'Ñ',
+            ],
+            [
+                'a',
+                'e',
+                'i',
+                'o',
+                'u',
+                'n',
+                'A',
+                'E',
+                'I',
+                'O',
+                'U',
+                'N',
+            ],
             $texto
         );
 

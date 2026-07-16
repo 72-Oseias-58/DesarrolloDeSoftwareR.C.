@@ -15,27 +15,19 @@ return new class extends Migration
             $table->unsignedBigInteger('id_sucursal');
             $table->unsignedInteger('id_jornada');
             $table->unsignedInteger('id_tipo_carne');
-
-            /*
-             * Usuario responsable del movimiento.
-             *
-             * En movimientos manuales será el ADMIN.
-             * En ventas automáticas será el usuario que originó el pedido
-             * o el usuario definido por el servicio.
-             */
             $table->unsignedBigInteger('id_user_crea');
 
-            /*
-             * Dirección matemática del movimiento.
-             */
+            $table->unsignedBigInteger('id_empleado_recolector')
+                ->nullable();
+
+            $table->dateTime('fecha_hora_recojo')
+                ->nullable();
+
             $table->enum('tipo_movimiento', [
                 'ENTRADA',
                 'SALIDA',
             ]);
 
-            /*
-             * Razón operativa por la que cambió la carne.
-             */
             $table->enum('motivo', [
                 'APERTURA',
                 'TIENDA_FAMILIAR',
@@ -45,66 +37,21 @@ return new class extends Migration
                 'MERMA',
             ]);
 
-            /*
-             * Unidad en la que se recibió, entregó o registró la carne.
-             *
-             * Pollo:
-             * CRUZ_POLLO
-             * POLLO
-             *
-             * Chancho:
-             * CRUZ_CHANCHO
-             * COSTILLA_GRANDE
-             * MIN_COSTILLA
-             */
             $table->string('unidad_registrada', 50);
-
-            /*
-             * Cantidad escrita o calculada originalmente.
-             *
-             * Ejemplos:
-             * 1 cruz
-             * 0.25 pollo
-             * 1 CostillaGrande
-             * 8 MinCostillas
-             */
             $table->decimal('cantidad_registrada', 10, 2);
-
-            /*
-             * Cantidad convertida a la unidad base del control.
-             *
-             * CHANCHO => MIN_COSTILLA
-             * POLLO   => POLLO
-             */
             $table->decimal('cantidad_base', 10, 2);
 
             $table->string('unidad_base', 50);
-
-            /*
-             * Auditoría del cambio.
-             */
             $table->decimal('cantidad_anterior', 10, 2);
             $table->decimal('cantidad_nueva', 10, 2);
 
-            /*
-             * Referencia opcional a la operación que originó el movimiento.
-             *
-             * Ejemplos:
-             * PEDIDO
-             * ANULACION_PEDIDO
-             * APERTURA_JORNADA
-             */
             $table->string('referencia_tipo', 50)->nullable();
             $table->unsignedBigInteger('referencia_id')->nullable();
 
-            /*
-             * Estos campos se utilizan principalmente cuando la carne
-             * entra o sale mediante la tienda familiar.
-             */
             $table->string('origen', 100)->nullable();
             $table->string('destino', 100)->nullable();
 
-            $table->string('observacion', 255)->nullable();
+            $table->string('observacion', 1000)->nullable();
 
             $table->dateTime('created_at')
                 ->nullable()
@@ -140,6 +87,12 @@ return new class extends Migration
                 ->on('users')
                 ->onUpdate('cascade');
 
+            $table->foreign('id_empleado_recolector')
+                ->references('id_empleado')
+                ->on('empleados')
+                ->onUpdate('cascade')
+                ->onDelete('set null');
+
             $table->index(
                 ['id_sucursal', 'id_jornada', 'id_tipo_carne'],
                 'mov_carne_sucursal_jornada_tipo_idx'
@@ -153,6 +106,11 @@ return new class extends Migration
             $table->index(
                 ['referencia_tipo', 'referencia_id'],
                 'mov_carne_referencia_idx'
+            );
+
+            $table->index(
+                ['id_empleado_recolector', 'fecha_hora_recojo'],
+                'mov_carne_empleado_recojo_idx'
             );
         });
     }
