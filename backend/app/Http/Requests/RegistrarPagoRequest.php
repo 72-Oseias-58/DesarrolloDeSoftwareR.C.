@@ -18,13 +18,7 @@ class RegistrarPagoRequest extends FormRequest
                 'required',
                 'numeric',
                 'min:0.01',
-                'decimal:0,2',
-            ],
-
-            'monto_qr' => [
-                'required',
-                'numeric',
-                'in:0',
+                'max:999999.99',
             ],
         ];
     }
@@ -33,25 +27,13 @@ class RegistrarPagoRequest extends FormRequest
     {
         return [
             'monto_efectivo.required' =>
-                'Debe indicar el monto pagado en efectivo.',
+                'Debe indicar el dinero recibido.',
 
             'monto_efectivo.numeric' =>
-                'El monto en efectivo debe ser numérico.',
+                'El dinero recibido debe ser un número válido.',
 
             'monto_efectivo.min' =>
-                'El monto en efectivo debe ser mayor a cero.',
-
-            'monto_efectivo.decimal' =>
-                'El monto en efectivo puede tener hasta dos decimales.',
-
-            'monto_qr.required' =>
-                'Debe enviar el monto QR con valor cero.',
-
-            'monto_qr.numeric' =>
-                'El monto QR debe ser numérico.',
-
-            'monto_qr.in' =>
-                'Los pagos por QR todavía no están habilitados.',
+                'El dinero recibido debe ser mayor a cero.',
         ];
     }
 }

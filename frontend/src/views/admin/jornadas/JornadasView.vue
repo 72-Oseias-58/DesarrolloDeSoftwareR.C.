@@ -15,6 +15,84 @@
       </q-card-section>
 
       <q-separator />
+      <q-card
+        v-if="obtenerControlCarneJornada().length"
+        flat
+        bordered
+        class="jornada-detalle-card q-mt-md"
+      >
+        <q-card-section>
+          <div class="text-h6 text-weight-bold q-mb-md">Carne disponible de la jornada</div>
+
+          <div class="row q-col-gutter-md">
+            <div
+              v-for="control in obtenerControlCarneJornada()"
+              :key="control.id_control_carne"
+              class="col-12 col-md-6"
+            >
+              <q-card flat bordered>
+                <q-card-section>
+                  <div class="row items-start no-wrap">
+                    <q-icon name="restaurant" color="primary" size="38px" class="q-mr-md" />
+
+                    <div class="col">
+                      <div class="text-subtitle1 text-weight-bold">
+                        {{ nombreTipoCarne(control) }}
+                      </div>
+
+                      <div class="text-grey-7 q-mt-xs">
+                        Cruces registradas:
+                        <b>{{ formatoCantidad(control.cantidad_cruces) }}</b>
+                      </div>
+                      <div v-if="rangoPlatosChancho(control)" class="text-grey-7 q-mt-xs">
+                        Estimado:
+                        <b>{{ rangoPlatosChancho(control) }}</b>
+                      </div>
+
+                      <div class="text-grey-7 q-mt-xs">
+                        Cantidad inicial:
+                        <b>
+                          {{ formatoCantidad(control.cantidad_base_inicial) }}
+                          {{ unidadBaseCarne(control) }}
+                        </b>
+                      </div>
+
+                      <div class="text-weight-bold q-mt-xs">
+                        Cantidad actual:
+                        <span
+                          :class="
+                            Number(control.cantidad_base_actual || 0) <= 0
+                              ? 'text-negative'
+                              : 'text-positive'
+                          "
+                        >
+                          {{ formatoCantidad(control.cantidad_base_actual) }}
+                          {{ unidadBaseCarne(control) }}
+                        </span>
+                      </div>
+
+                      <q-linear-progress
+                        rounded
+                        size="12px"
+                        class="q-mt-md"
+                        :value="porcentajeRestanteCarne(control) / 100"
+                        :color="
+                          Number(control.cantidad_base_actual || 0) <= 0 ? 'negative' : 'positive'
+                        "
+                      />
+
+                      <div class="text-caption text-grey-7 q-mt-xs">
+                        Restante:
+                        {{ formatoCantidad(porcentajeRestanteCarne(control)) }}%
+                      </div>
+                    </div>
+                  </div>
+                </q-card-section>
+              </q-card>
+            </div>
+          </div>
+        </q-card-section>
+      </q-card>
 
       <q-card-section>
         <div v-if="loading" class="jornadas-loading">
@@ -29,9 +107,7 @@
                 <q-card-section>
                   <q-icon name="today" size="34px" color="primary" />
 
-                  <div class="text-subtitle1 text-weight-bold q-mt-sm">
-                    Jornada actual
-                  </div>
+                  <div class="text-subtitle1 text-weight-bold q-mt-sm">Jornada actual</div>
 
                   <div class="text-grey-7 q-mt-sm">
                     {{ textoJornadaActual }}
@@ -46,12 +122,7 @@
                     {{ jornadaActual.estado }}
                   </q-chip>
 
-                  <q-chip
-                    v-else
-                    class="q-mt-md"
-                    color="grey"
-                    text-color="white"
-                  >
+                  <q-chip v-else class="q-mt-md" color="grey" text-color="white">
                     SIN JORNADA
                   </q-chip>
                 </q-card-section>
@@ -63,12 +134,11 @@
                 <q-card-section>
                   <q-icon name="play_circle" size="34px" color="green" />
 
-                  <div class="text-subtitle1 text-weight-bold q-mt-sm">
-                    Abrir jornada
-                  </div>
+                  <div class="text-subtitle1 text-weight-bold q-mt-sm">Abrir jornada</div>
 
                   <div class="text-grey-7 q-mt-sm">
-                    Inicia la operación diaria registrando las cruces de chancho y pollo disponibles.
+                    Inicia la operación diaria registrando las cruces de chancho y pollo
+                    disponibles.
                   </div>
 
                   <q-btn
@@ -91,9 +161,7 @@
                 <q-card-section>
                   <q-icon name="stop_circle" size="34px" color="red" />
 
-                  <div class="text-subtitle1 text-weight-bold q-mt-sm">
-                    Cerrar jornada
-                  </div>
+                  <div class="text-subtitle1 text-weight-bold q-mt-sm">Cerrar jornada</div>
 
                   <div class="text-grey-7 q-mt-sm">
                     Finaliza la operación cuando las cajas y ventas del día estén cerradas.
@@ -116,15 +184,13 @@
           </div>
 
           <q-banner rounded class="bg-blue-1 text-blue-10 q-mt-md">
-            Una sucursal solo puede tener una jornada por día. Antes de abrirla debes registrar
-            las cruces de chancho y pollo disponibles para la venta.
+            Una sucursal solo puede tener una jornada por día. Antes de abrirla debes registrar las
+            cruces de chancho y pollo disponibles para la venta.
           </q-banner>
 
           <q-card v-if="jornadaActual" flat bordered class="jornada-detalle-card q-mt-md">
             <q-card-section>
-              <div class="text-h6 text-weight-bold q-mb-md">
-                Detalle de la jornada
-              </div>
+              <div class="text-h6 text-weight-bold q-mb-md">Detalle de la jornada</div>
 
               <div class="row q-col-gutter-md">
                 <div class="col-12 col-md-3">
@@ -165,9 +231,7 @@
             class="jornada-detalle-card q-mt-md"
           >
             <q-card-section>
-              <div class="text-h6 text-weight-bold q-mb-md">
-                Carne disponible de la jornada
-              </div>
+              <div class="text-h6 text-weight-bold q-mb-md">Carne disponible de la jornada</div>
 
               <div class="row q-col-gutter-md">
                 <div
@@ -178,12 +242,7 @@
                   <q-card flat bordered>
                     <q-card-section>
                       <div class="row items-center no-wrap">
-                        <q-icon
-                          name="restaurant"
-                          color="primary"
-                          size="34px"
-                          class="q-mr-md"
-                        />
+                        <q-icon name="restaurant" color="primary" size="34px" class="q-mr-md" />
 
                         <div class="col">
                           <div class="text-subtitle1 text-weight-bold">
@@ -194,10 +253,22 @@
                             Cruces: {{ formatoCantidad(control.cantidad_cruces) }}
                           </div>
 
-                          <div class="text-grey-7">
+                          <div v-if="esChanchoControl(control)" class="text-grey-7 q-mt-xs">
+                            CostillasGrandes:
+                            <b>{{ formatoCantidad(costillasGrandesChancho(control)) }}</b>
+                          </div>
+
+                          <div v-if="esChanchoControl(control)" class="text-grey-7 q-mt-xs">
+                            Estimado:
+                            <b>{{ rangoMinCostillasChancho(control) }}</b>
+                          </div>
+
+                          <div class="text-grey-7 q-mt-xs">
                             Inicial:
-                            {{ formatoCantidad(control.cantidad_base_inicial) }}
-                            {{ control.unidad_base }}
+                            <b>
+                              {{ formatoCantidad(control.cantidad_base_inicial) }}
+                              {{ unidadBaseCarne(control) }}
+                            </b>
                           </div>
 
                           <div class="text-weight-bold q-mt-xs">
@@ -268,11 +339,9 @@
     </q-card>
 
     <q-dialog v-model="mostrarDialogoApertura" persistent>
-      <q-card style="width: 640px; max-width: 95vw;">
+      <q-card style="width: 640px; max-width: 95vw">
         <q-card-section>
-          <div class="text-h6 text-weight-bold">
-            Abrir jornada
-          </div>
+          <div class="text-h6 text-weight-bold">Abrir jornada</div>
 
           <div class="text-grey-7">
             Registra cuántas cruces de chancho y pollo hay disponibles para vender hoy.
@@ -282,19 +351,19 @@
         <q-separator />
 
         <q-card-section>
-          <q-banner rounded class="bg-orange-1 text-orange-10 q-mb-md">
-            Conversión usada:
-            1 cruz de chancho = 2 costillas/huesos.
-            1 cruz de pollo = 2 pollos.
-          </q-banner>
+          <q-banner
+  rounded
+  class="bg-orange-1 text-orange-10 q-mb-md"
+>
+  Conversión usada: 1 cruz de chancho = 2 CostillasGrandes
+  y aproximadamente 24 MinCostillas. 1 cruz de pollo = 2 pollos.
+</q-banner>
 
           <div class="row q-col-gutter-md">
             <div class="col-12 col-md-6">
               <q-card flat bordered>
                 <q-card-section>
-                  <div class="text-subtitle1 text-weight-bold q-mb-md">
-                    Chancho
-                  </div>
+                  <div class="text-subtitle1 text-weight-bold q-mb-md">Chancho</div>
 
                   <q-input
                     v-model.number="formApertura.chancho_cruces"
@@ -308,7 +377,7 @@
 
                   <div class="text-grey-7 q-mt-sm">
                     Base inicial:
-                    <b>{{ formatoCantidad(baseChancho) }} COSTILLA</b>
+                   <b>{{ formatoCantidad(baseChancho) }} MinCostillas</b>
                   </div>
                 </q-card-section>
               </q-card>
@@ -317,9 +386,7 @@
             <div class="col-12 col-md-6">
               <q-card flat bordered>
                 <q-card-section>
-                  <div class="text-subtitle1 text-weight-bold q-mb-md">
-                    Pollo
-                  </div>
+                  <div class="text-subtitle1 text-weight-bold q-mb-md">Pollo</div>
 
                   <q-input
                     v-model.number="formApertura.pollo_cruces"

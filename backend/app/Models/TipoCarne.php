@@ -22,4 +22,13 @@ class TipoCarne extends Model
             'id_tipo_carne'
         );
     }
+
+    public function movimientosCarne()
+    {
+        return $this->hasMany(
+            MovimientoCarne::class,
+            'id_tipo_carne',
+            'id_tipo_carne'
+        );
+    }
 }

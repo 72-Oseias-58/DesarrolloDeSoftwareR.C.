@@ -35,15 +35,98 @@ class User extends Authenticatable implements JWTSubject
 
     public function rol()
     {
-        return $this->belongsTo(Role::class, 'id_rol', 'id_rol');
+        return $this->belongsTo(
+            Role::class,
+            'id_rol',
+            'id_rol'
+        );
     }
 
     public function empleado()
     {
-        return $this->hasOne(Empleado::class, 'id_user', 'id');
+        return $this->hasOne(
+            Empleado::class,
+            'id_user',
+            'id'
+        );
     }
 
-    
+    public function permisosPersonalizados()
+    {
+        return $this->hasMany(
+            PermisoUser::class,
+            'id_user',
+            'id'
+        );
+    }
+
+    public function pagosCreados()
+    {
+        return $this->hasMany(
+            Pago::class,
+            'id_user_crea',
+            'id'
+        );
+    }
+
+    public function cajasCreadas()
+    {
+        return $this->hasMany(
+            Caja::class,
+            'id_user_crea',
+            'id'
+        );
+    }
+
+    public function movimientosCarneCreados()
+    {
+        return $this->hasMany(
+            MovimientoCarne::class,
+            'id_user_crea',
+            'id'
+        );
+    }
+
+    public function permisosFinales()
+    {
+        $this->loadMissing(
+            'rol.permisos',
+            'permisosPersonalizados.permiso'
+        );
+
+        $permisosRol = $this->rol
+            ? $this->rol->permisos->pluck('slug')->toArray()
+            : [];
+
+        $agregados = $this->permisosPersonalizados
+            ->where('tipo', 'AGREGADO')
+            ->pluck('permiso.slug')
+            ->filter()
+            ->toArray();
+
+        $quitados = $this->permisosPersonalizados
+            ->where('tipo', 'QUITADO')
+            ->pluck('permiso.slug')
+            ->filter()
+            ->toArray();
+
+        return collect($permisosRol)
+            ->merge($agregados)
+            ->unique()
+            ->reject(
+                fn ($permiso) => in_array(
+                    $permiso,
+                    $quitados,
+                    true
+                )
+            )
+            ->values();
+    }
+
+    public function tienePermiso(string $permiso): bool
+    {
+        return $this->permisosFinales()->contains($permiso);
+    }
 
     public function getJWTIdentifier()
     {
@@ -54,57 +137,4 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
-    public function permisosPersonalizados()
-{
-    return $this->hasMany(PermisoUser::class, 'id_user', 'id');
-}
-
-public function permisosFinales()
-{
-    $permisosRol = $this->rol
-        ? $this->rol->permisos->pluck('slug')->toArray()
-        : [];
-
-    $agregados = $this->permisosPersonalizados
-        ->where('tipo', 'AGREGADO')
-        ->pluck('permiso.slug')
-        ->filter()
-        ->toArray();
-
-    $quitados = $this->permisosPersonalizados
-        ->where('tipo', 'QUITADO')
-        ->pluck('permiso.slug')
-        ->filter()
-        ->toArray();
-
-    return collect($permisosRol)
-        ->merge($agregados)
-        ->unique()
-        ->reject(fn ($permiso) => in_array($permiso, $quitados))
-        ->values();
-}
-
-public function tienePermiso(string $permiso): bool
-{
-    $this->loadMissing('rol.permisos', 'permisosPersonalizados.permiso');
-
-    return $this->permisosFinales()->contains($permiso);
-}
-public function pagosCreados()
-{
-    return $this->hasMany(
-        Pago::class,
-        'id_user_crea',
-        'id'
-    );
-}
-
-public function cajasCreadas()
-{
-    return $this->hasMany(
-        Caja::class,
-        'id_user_crea',
-        'id'
-    );
-}
 }

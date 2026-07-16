@@ -1,9 +1,4 @@
-import {
-  computed,
-  defineComponent,
-  onMounted,
-  ref,
-} from 'vue'
+import { computed, defineComponent, onMounted, ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/api/axios'
@@ -30,6 +25,19 @@ export default defineComponent({
       pollo_cruces: null,
       observacion: '',
     })
+    const obtenerControlCarneJornada = () => {
+      if (!jornadaActual.value) {
+        return []
+      }
+
+      return (
+        jornadaActual.value.control_carne ||
+        jornadaActual.value.controlCarne ||
+        jornadaActual.value.controles_carne ||
+        jornadaActual.value.controlesCarne ||
+        []
+      )
+    }
 
     const columns = [
       {
@@ -72,8 +80,8 @@ export default defineComponent({
     })
 
     const baseChancho = computed(() => {
-      return Number(formApertura.value.chancho_cruces || 0) * 2
-    })
+  return Number(formApertura.value.chancho_cruces || 0) * 24
+})
 
     const basePollo = computed(() => {
       return Number(formApertura.value.pollo_cruces || 0) * 2
@@ -90,10 +98,7 @@ export default defineComponent({
         }
       }
 
-      return (
-        error.response?.data?.message ||
-        'Ocurrió un error inesperado.'
-      )
+      return error.response?.data?.message || 'Ocurrió un error inesperado.'
     }
 
     const normalizarNombre = (nombre) => {
@@ -158,11 +163,7 @@ export default defineComponent({
 
         const data = response.data?.jornadas
 
-        jornadas.value = Array.isArray(data?.data)
-          ? data.data
-          : Array.isArray(data)
-            ? data
-            : []
+        jornadas.value = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []
       } catch (error) {
         q.notify({
           type: 'negative',
@@ -236,22 +237,16 @@ export default defineComponent({
       const crucesChancho = Number(formApertura.value.chancho_cruces || 0)
       const crucesPollo = Number(formApertura.value.pollo_cruces || 0)
 
-      const observacionGeneral =
-        formApertura.value.observacion?.trim() || null
+      const observacionGeneral = formApertura.value.observacion?.trim() || null
 
       return {
         carnes: [
           {
             id_tipo_carne: tipoChancho.id_tipo_carne,
             cantidad_cruces: crucesChancho,
-
-            // 1 cruz de chancho = 2 costillas/huesos.
-            cantidad_base_inicial: crucesChancho * 2,
-            unidad_base: 'COSTILLA',
-
-            // Estimación simple: plato chancho Bs 50 usa 1.5 costillas.
-            platos_estimados: (crucesChancho * 2) / 1.5,
-
+            cantidad_base_inicial: crucesChancho * 24,
+            unidad_base: 'MIN_COSTILLA',
+            platos_estimados: crucesChancho * 24,
             observacion: observacionGeneral,
           },
           {
@@ -340,6 +335,26 @@ export default defineComponent({
         procesando.value = false
       }
     }
+    const rangoPlatosChancho = (control) => {
+      const nombre = normalizarNombre(
+        control?.tipo_carne?.nombre || control?.tipoCarne?.nombre || '',
+      )
+
+      if (nombre !== 'CHANCHO') {
+        return ''
+      }
+
+      const cruces = Number(control?.cantidad_cruces || 0)
+
+      if (cruces <= 0) {
+        return ''
+      }
+
+      const minimo = Math.round(cruces * 22)
+      const maximo = Math.round(cruces * 26)
+
+      return `${minimo} a ${maximo} platos aprox.`
+    }
 
     const confirmarAbrirJornada = () => {
       const errorValidacion = validarApertura()
@@ -379,7 +394,8 @@ export default defineComponent({
     const confirmarCerrarJornada = () => {
       q.dialog({
         title: 'Cerrar jornada',
-        message: '¿Deseas cerrar la jornada actual? Después no se podrá abrir otra jornada para la misma fecha.',
+        message:
+          '¿Deseas cerrar la jornada actual? Después no se podrá abrir otra jornada para la misma fecha.',
         cancel: true,
         persistent: true,
         ok: {
@@ -413,12 +429,71 @@ export default defineComponent({
     }
 
     onMounted(async () => {
-      await Promise.all([
-        cargarTiposCarne(),
-        cargarJornadaActual(),
-        cargarHistorial(),
-      ])
+      await Promise.all([cargarTiposCarne(), cargarJornadaActual(), cargarHistorial()])
     })
+
+    const nombreTipoCarne = (control) => {
+      return control?.tipo_carne?.nombre || control?.tipoCarne?.nombre || 'Carne'
+    }
+
+    const unidadBaseCarne = (control) => {
+      const unidad = String(control?.unidad_base || '').toUpperCase()
+
+      if (unidad === 'MIN_COSTILLA') {
+        return 'MinCostillas'
+      }
+
+      if (unidad === 'COSTILLA_GRANDE') {
+        return 'CostillasGrandes'
+      }
+
+      if (unidad === 'POLLO') {
+        return 'Pollos'
+      }
+
+      return unidad || ''
+    }
+    const esChanchoControl = (control) => {
+      const nombre = normalizarNombre(
+        control?.tipo_carne?.nombre || control?.tipoCarne?.nombre || '',
+      )
+
+      return nombre === 'CHANCHO'
+    }
+
+    const costillasGrandesChancho = (control) => {
+      if (!esChanchoControl(control)) {
+        return ''
+      }
+
+      const cruces = Number(control?.cantidad_cruces || 0)
+
+      return cruces * 2
+    }
+
+    const rangoMinCostillasChancho = (control) => {
+      if (!esChanchoControl(control)) {
+        return ''
+      }
+
+      const costillasGrandes = costillasGrandesChancho(control)
+
+      const minimo = costillasGrandes * 11
+      const maximo = costillasGrandes * 13
+
+      return `${minimo} a ${maximo} MinCostillas aprox.`
+    }
+
+    const porcentajeRestanteCarne = (control) => {
+      const inicial = Number(control?.cantidad_base_inicial || 0)
+      const actual = Number(control?.cantidad_base_actual || 0)
+
+      if (inicial <= 0) {
+        return 0
+      }
+
+      return Math.max(0, Math.min(100, (actual / inicial) * 100))
+    }
 
     return {
       q,
@@ -453,6 +528,16 @@ export default defineComponent({
 
       formatearFecha,
       formatoCantidad,
+
+      obtenerControlCarneJornada,
+      nombreTipoCarne,
+      unidadBaseCarne,
+      porcentajeRestanteCarne,
+
+      rangoPlatosChancho,
+      esChanchoControl,
+      costillasGrandesChancho,
+      rangoMinCostillasChancho,
     }
   },
 })

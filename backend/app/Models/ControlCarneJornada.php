@@ -55,4 +55,13 @@ class ControlCarneJornada extends Model
             'id_tipo_carne'
         );
     }
+
+    public function movimientos()
+    {
+        return $this->hasMany(
+            MovimientoCarne::class,
+            'id_control_carne',
+            'id_control_carne'
+        );
+    }
 }

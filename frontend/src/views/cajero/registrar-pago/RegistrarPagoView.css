@@ -1,3 +1,160 @@
 .registrar-pago-page {
-  padding: 24px;
+  width: 100%;
+}
+
+.registrar-pago-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cajero-module-card {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.estado-pedidos {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #6b7280;
+}
+
+.pedido-pendiente-card {
+  border-radius: 16px;
+  transition: 0.18s ease;
+}
+
+.pedido-pendiente-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--q-primary);
+}
+
+.pedido-seleccionado {
+  border-color: var(--q-primary);
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.16);
+}
+
+.pedido-total-mini {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--q-primary);
+}
+
+.detalle-label {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.detalle-value {
+  font-size: 20px;
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.detalle-producto {
+  font-size: 14px;
+}
+
+.ticket-dialog-card {
+  min-height: 100vh;
+}
+
+.ticket-termico {
+  width: 80mm;
+  min-height: auto;
+  padding: 8px;
+  margin: 0 auto;
+  color: #000;
+  background: #fff;
+  border: 1px dashed #999;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.ticket-center {
+  text-align: center;
+}
+
+.ticket-title {
+  font-weight: 800;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.ticket-code {
+  font-weight: 800;
+  font-size: 15px;
+  margin: 6px 0;
+}
+
+.ticket-separator {
+  border-top: 1px dashed #000;
+  margin: 8px 0;
+}
+
+.ticket-section-title {
+  text-align: center;
+  font-weight: 800;
+  margin: 6px 0;
+}
+
+.ticket-item {
+  margin-bottom: 8px;
+}
+
+.ticket-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ticket-total {
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.ticket-indent {
+  padding-left: 10px;
+}
+
+.ticket-message {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.ficha-mesero {
+  text-align: center;
+  padding-top: 12px;
+}
+
+.ficha-code {
+  font-size: 34px;
+  font-weight: 900;
+  margin: 18px 0;
+}
+
+.ficha-count {
+  font-size: 20px;
+  font-weight: 900;
+  margin: 8px 0;
+}
+
+@media (max-width: 700px) {
+  .ticket-termico {
+    width: 100%;
+  }
+
+  .detalle-value {
+    font-size: 18px;
+  }
 }

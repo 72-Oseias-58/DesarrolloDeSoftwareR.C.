@@ -22,11 +22,134 @@
           icon="refresh"
           label="Actualizar"
           unelevated
-          :loading="cargandoProductos"
-          @click="cargarProductos"
+          :loading="cargandoProductos || cargandoJornada"
+          @click="actualizarPantalla"
         />
       </div>
     </div>
+
+    <q-card class="cajero-module-card q-mb-md">
+      <q-card-section>
+        <div class="row items-center justify-between q-gutter-sm">
+          <div>
+            <div class="text-h6 text-weight-bold">Producción diaria disponible</div>
+
+            <div class="text-grey-7">Carne disponible para platos y venta manual.</div>
+          </div>
+
+          <q-btn
+            flat
+            round
+            color="primary"
+            icon="refresh"
+            :loading="cargandoJornada"
+            @click="cargarJornadaActual"
+          >
+            <q-tooltip>Actualizar producción diaria</q-tooltip>
+          </q-btn>
+        </div>
+
+        <div v-if="cargandoJornada" class="q-mt-md">
+          <q-spinner color="primary" size="32px" />
+          <span class="q-ml-sm text-grey-7">Cargando producción...</span>
+        </div>
+
+        <q-banner v-else-if="errorJornada" rounded class="bg-red-1 text-negative q-mt-md">
+          {{ errorJornada }}
+        </q-banner>
+
+        <q-banner v-else-if="!jornadaActual" rounded class="bg-orange-1 text-orange-10 q-mt-md">
+          No existe una jornada abierta para hoy.
+        </q-banner>
+
+        <div v-else-if="obtenerControlCarneJornada().length" class="row q-col-gutter-md q-mt-sm">
+          <div
+            v-for="control in obtenerControlCarneJornada()"
+            :key="control.id_control_carne"
+            class="col-12 col-md-6"
+          >
+            <q-card flat bordered>
+              <q-card-section>
+                <div class="row items-start no-wrap">
+                  <q-icon
+                    name="local_fire_department"
+                    color="deep-orange"
+                    size="38px"
+                    class="q-mr-md"
+                  />
+
+                  <div class="col">
+                    <div class="text-subtitle1 text-weight-bold">
+                      {{ nombreTipoCarne(control) }}
+                    </div>
+
+                    <div class="text-grey-7 q-mt-xs">
+                      Cruces:
+                      <b>{{ formatoCantidad(control.cantidad_cruces) }}</b>
+                    </div>
+                    <div v-if="rangoPlatosChancho(control)" class="text-grey-7 q-mt-xs">
+                      Estimado:
+                      <b>{{ rangoPlatosChancho(control) }}</b>
+                    </div>
+
+                    <div v-if="esChanchoControl(control)" class="text-grey-7 q-mt-xs">
+                      CostillasGrandes:
+                      <b>{{ formatoCantidad(costillasGrandesChancho(control)) }}</b>
+                    </div>
+
+                    <div v-if="esChanchoControl(control)" class="text-grey-7 q-mt-xs">
+                      Estimado:
+                      <b>{{ rangoMinCostillasChancho(control) }}</b>
+                    </div>
+
+                    <div class="text-grey-7 q-mt-xs">
+                      Inicial:
+                      <b>
+                        {{ formatoCantidad(control.cantidad_base_inicial) }}
+                        {{ unidadBaseCarne(control) }}
+                      </b>
+                    </div>
+
+                    <div class="text-weight-bold q-mt-xs">
+                      Actual:
+                      <span
+                        :class="
+                          Number(control.cantidad_base_actual || 0) <= 0
+                            ? 'text-negative'
+                            : 'text-positive'
+                        "
+                      >
+                        {{ formatoCantidad(control.cantidad_base_actual) }}
+                        {{ unidadBaseCarne(control) }}
+                      </span>
+                    </div>
+
+                    <q-linear-progress
+                      rounded
+                      size="12px"
+                      class="q-mt-md"
+                      :value="porcentajeRestanteCarne(control) / 100"
+                      :color="
+                        Number(control.cantidad_base_actual || 0) <= 0 ? 'negative' : 'positive'
+                      "
+                    />
+
+                    <div class="text-caption text-grey-7 q-mt-xs">
+                      Restante:
+                      {{ formatoCantidad(porcentajeRestanteCarne(control)) }}%
+                    </div>
+                  </div>
+                </div>
+              </q-card-section>
+            </q-card>
+          </div>
+        </div>
+
+        <q-banner v-else rounded class="bg-orange-1 text-orange-10 q-mt-md">
+          La jornada existe, pero no tiene control de carne registrado.
+        </q-banner>
+      </q-card-section>
+    </q-card>
 
     <div class="row q-col-gutter-lg">
       <div class="col-12 col-lg-7">
@@ -34,13 +157,9 @@
           <q-card-section>
             <div class="row items-center justify-between q-gutter-sm">
               <div>
-                <div class="text-h6 text-weight-bold">
-                  Productos disponibles
-                </div>
+                <div class="text-h6 text-weight-bold">Productos disponibles</div>
 
-                <div class="text-grey-7">
-                  Platos y bebidas disponibles para vender.
-                </div>
+                <div class="text-grey-7">Platos y bebidas disponibles para vender.</div>
               </div>
             </div>
           </q-card-section>
@@ -50,28 +169,17 @@
           <q-card-section>
             <div v-if="cargandoProductos" class="estado-catalogo">
               <q-spinner color="primary" size="46px" />
-              <div class="q-mt-md text-grey-7">
-                Cargando productos...
-              </div>
+              <div class="q-mt-md text-grey-7">Cargando productos...</div>
             </div>
 
-            <q-banner
-              v-else-if="errorProductos"
-              rounded
-              class="bg-red-1 text-negative"
-            >
+            <q-banner v-else-if="errorProductos" rounded class="bg-red-1 text-negative">
               {{ errorProductos }}
             </q-banner>
 
-            <div
-              v-else-if="productos.length === 0"
-              class="estado-catalogo"
-            >
+            <div v-else-if="productos.length === 0" class="estado-catalogo">
               <q-icon name="inventory_2" size="54px" color="grey-5" />
 
-              <div class="q-mt-md text-grey-7">
-                No existen productos registrados.
-              </div>
+              <div class="q-mt-md text-grey-7">No existen productos registrados.</div>
             </div>
 
             <div v-else class="row q-col-gutter-md">
@@ -88,16 +196,8 @@
                     fit="cover"
                   />
 
-                  <div
-                    v-else
-                    class="row flex-center bg-grey-2"
-                    style="height: 150px;"
-                  >
-                    <q-icon
-                      :name="iconoProducto(producto)"
-                      size="56px"
-                      color="grey-5"
-                    />
+                  <div v-else class="row flex-center bg-grey-2" style="height: 150px">
+                    <q-icon :name="iconoProducto(producto)" size="56px" color="grey-5" />
                   </div>
 
                   <q-card-section>
@@ -119,13 +219,8 @@
                         </div>
 
                         <div class="q-mt-sm row q-gutter-xs">
-                          <q-chip
-                            dense
-                            color="orange-1"
-                            text-color="orange-10"
-                            icon="inventory"
-                          >
-                            {{ producto.prioridad_stock || 'SIN_STOCK' }}
+                          <q-chip dense color="orange-1" text-color="orange-10" icon="inventory">
+                            {{ etiquetaControlProducto(producto) }}
                           </q-chip>
 
                           <q-chip
@@ -135,7 +230,17 @@
                             text-color="red-10"
                             icon="local_fire_department"
                           >
-                            Producción diaria
+                            Consume carne
+                          </q-chip>
+
+                          <q-chip
+                            v-if="esProductoIndependiente(producto)"
+                            dense
+                            color="green-1"
+                            text-color="green-10"
+                            icon="restaurant"
+                          >
+                            Independiente
                           </q-chip>
                         </div>
 
@@ -150,9 +255,7 @@
                     </div>
 
                     <div class="row items-center justify-between q-mt-md">
-                      <div class="producto-precio">
-                        Bs {{ formatoDinero(producto.precio) }}
-                      </div>
+                      <div class="producto-precio">Bs {{ formatoDinero(producto.precio) }}</div>
 
                       <q-btn
                         color="primary"
@@ -177,13 +280,9 @@
           <q-card-section>
             <div class="row items-center justify-between">
               <div>
-                <div class="text-h6 text-weight-bold">
-                  Pedido actual
-                </div>
+                <div class="text-h6 text-weight-bold">Pedido actual</div>
 
-                <div class="text-grey-7">
-                  {{ cantidadProductos }} item(s)
-                </div>
+                <div class="text-grey-7">{{ cantidadProductos }} item(s)</div>
               </div>
 
               <q-icon name="shopping_cart" size="36px" color="primary" />
@@ -213,19 +312,11 @@
             />
 
             <div v-if="detalles.length === 0" class="pedido-vacio">
-              <q-icon
-                name="add_shopping_cart"
-                size="56px"
-                color="grey-5"
-              />
+              <q-icon name="add_shopping_cart" size="56px" color="grey-5" />
 
-              <div class="text-weight-bold q-mt-md">
-                El pedido está vacío
-              </div>
+              <div class="text-weight-bold q-mt-md">El pedido está vacío</div>
 
-              <div class="text-grey-7">
-                Agrega productos o pura carne al pedido.
-              </div>
+              <div class="text-grey-7">Agrega productos o pura carne al pedido.</div>
             </div>
 
             <q-card
@@ -250,8 +341,19 @@
 
                       <div class="text-grey-7 q-mt-xs">
                         Descuento:
+                        {{ formatoCantidad(consumoBasePuraCarne(detalle)) }}
+                        {{ unidadBasePuraCarne(detalle.tipo_carne_manual) }}
+                      </div>
+
+                      <div class="text-caption text-grey-7">
+                        Venta:
                         {{ formatoCantidad(detalle.cantidad_carne_manual) }}
-                        {{ etiquetaUnidadCarne(detalle.tipo_carne_manual, detalle.unidad_carne_manual) }}
+                        {{
+                          etiquetaUnidadCarne(
+                            detalle.tipo_carne_manual,
+                            detalle.unidad_carne_manual,
+                          )
+                        }}
                       </div>
                     </div>
 
@@ -298,7 +400,7 @@
                         type="number"
                         min="0.01"
                         step="0.01"
-                        label="Cantidad a descontar"
+                        label="Cantidad"
                       />
                     </div>
 
@@ -342,6 +444,13 @@
                       >
                         {{ textoStockProducto(detalle.producto) }}
                       </div>
+
+                      <div
+                        v-if="textoConsumoProducto(detalle.producto)"
+                        class="text-caption text-deep-orange q-mt-xs"
+                      >
+                        {{ textoConsumoProducto(detalle.producto) }}
+                      </div>
                     </div>
 
                     <q-btn
@@ -381,23 +490,18 @@
                       @click="aumentarCantidad(detalle)"
                     />
 
-                    <div class="subtotal">
-                      Bs {{ formatoDinero(subtotalDetalle(detalle)) }}
-                    </div>
+                    <div class="subtotal">Bs {{ formatoDinero(subtotalDetalle(detalle)) }}</div>
                   </div>
 
                   <q-banner
+                    v-if="tieneGuarniciones(detalle.producto)"
                     rounded
                     class="bg-orange-1 text-orange-10 q-mt-md"
                   >
-                    Los {{ detalle.cantidad }} plato(s) de este grupo tendrán
-                    la misma preparación.
+                    Los {{ detalle.cantidad }} plato(s) de este grupo tendrán la misma preparación.
                   </q-banner>
 
-                  <div
-                    v-if="tieneGuarniciones(detalle.producto)"
-                    class="q-mt-md"
-                  >
+                  <div v-if="tieneGuarniciones(detalle.producto)" class="q-mt-md">
                     <q-select
                       v-model="detalle.tipoPreparacion"
                       outlined
@@ -408,13 +512,8 @@
                       @update:model-value="aplicarPreparacion(detalle)"
                     />
 
-                    <div
-                      v-if="detalle.tipoPreparacion !== 'PERSONALIZADO'"
-                      class="q-mt-md"
-                    >
-                      <div class="text-weight-bold q-mb-sm">
-                        Guarniciones incluidas
-                      </div>
+                    <div v-if="detalle.tipoPreparacion !== 'PERSONALIZADO'" class="q-mt-md">
+                      <div class="text-weight-bold q-mb-sm">Guarniciones incluidas</div>
 
                       <div class="guarniciones-chips">
                         <q-chip
@@ -430,9 +529,7 @@
                     </div>
 
                     <div v-else class="q-mt-md">
-                      <div class="text-weight-bold q-mb-sm">
-                        Seleccionar guarniciones
-                      </div>
+                      <div class="text-weight-bold q-mb-sm">Seleccionar guarniciones</div>
 
                       <q-option-group
                         v-model="detalle.guarniciones"
@@ -472,9 +569,7 @@
             <div class="row items-center justify-between">
               <div class="text-h6 text-weight-bold">Total</div>
 
-              <div class="pedido-total">
-                Bs {{ formatoDinero(totalPedido) }}
-              </div>
+              <div class="pedido-total">Bs {{ formatoDinero(totalPedido) }}</div>
             </div>
 
             <q-btn
@@ -494,15 +589,11 @@
     </div>
 
     <q-dialog v-model="mostrarDialogoPuraCarne" persistent>
-      <q-card style="width: 460px; max-width: 95vw;">
+      <q-card style="width: 460px; max-width: 95vw">
         <q-card-section>
-          <div class="text-h6 text-weight-bold">
-            Agregar pura carne
-          </div>
+          <div class="text-h6 text-weight-bold">Agregar pura carne</div>
 
-          <div class="text-grey-7">
-            Registra una venta manual y descuenta producción diaria.
-          </div>
+          <div class="text-grey-7">Registra una venta manual y descuenta producción diaria.</div>
         </q-card-section>
 
         <q-separator />
@@ -556,6 +647,16 @@
             </div>
 
             <div class="col-12">
+              <q-banner rounded class="bg-orange-1 text-orange-10">
+                Se descontará:
+                <b>
+                  {{ formatoCantidad(consumoBaseFormPuraCarne) }}
+                  {{ unidadBasePuraCarne(formPuraCarne.tipo_carne_manual) }}
+                </b>
+              </q-banner>
+            </div>
+
+            <div class="col-12">
               <q-input
                 v-model="formPuraCarne.observacion"
                 outlined
@@ -568,12 +669,7 @@
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn
-            flat
-            label="Cancelar"
-            color="grey-8"
-            @click="cerrarDialogoPuraCarne"
-          />
+          <q-btn flat label="Cancelar" color="grey-8" @click="cerrarDialogoPuraCarne" />
 
           <q-btn
             unelevated

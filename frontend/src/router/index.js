@@ -17,6 +17,7 @@ import ReportesView from '../views/admin/reportes/ReportesView.vue'
 import JornadasView from '../views/admin/jornadas/JornadasView.vue'
 import CajasView from '../views/admin/cajas/CajasView.vue'
 import SolicitudesView from '../views/admin/solicitudes/SolicitudesView.vue'
+import MovimientosCarneView from '../views/admin/movimientos-carne/MovimientosCarneView.vue'
 
 import NuevoPedidoView from '../views/cajero/nuevo-pedido/NuevoPedidoView.vue'
 import RegistrarPagoView from '../views/cajero/registrar-pago/RegistrarPagoView.vue'
@@ -25,7 +26,6 @@ import ReimprimirTicketView from '../views/cajero/reimprimir-ticket/ReimprimirTi
 import CajaView from '../views/cajero/caja/CajaView.vue'
 import StockBebidasView from '../views/cajero/stock-bebidas/StockBebidasView.vue'
 import CatalogoProductosView from '../views/cajero/catalogo-productos/CatalogoProductosView.vue'
-
 
 import SucursalesView from '../views/superadmin/sucursales/SucursalesView.vue'
 import EstadisticasSucursalView from '../views/superadmin/estadisticas-sucursal/EstadisticasSucursalView.vue'
@@ -103,6 +103,7 @@ const routes = [
       requiereInvitado: true,
     },
   },
+
   {
     path: '/superadmin',
     component: MainLayout,
@@ -119,12 +120,16 @@ const routes = [
         path: 'dashboard',
         name: 'superadmin-dashboard',
         component: SuperAdminDashboard,
+        meta: {
+          roles: ['SUPERADMIN'],
+        },
       },
       {
         path: 'sucursales',
         name: 'superadmin-sucursales',
         component: SucursalesView,
         meta: {
+          roles: ['SUPERADMIN'],
           permiso: 'ver_sucursales',
         },
       },
@@ -133,6 +138,7 @@ const routes = [
         name: 'superadmin-sucursal-estadisticas',
         component: EstadisticasSucursalView,
         meta: {
+          roles: ['SUPERADMIN'],
           permiso: 'ver_sucursales',
         },
       },
@@ -141,6 +147,7 @@ const routes = [
         name: 'superadmin-administradores',
         component: AdministradoresView,
         meta: {
+          roles: ['SUPERADMIN'],
           permiso: 'ver_administradores',
         },
       },
@@ -149,11 +156,13 @@ const routes = [
         name: 'superadmin-usuario-permisos',
         component: PermisosUsuarioView,
         meta: {
+          roles: ['SUPERADMIN'],
           permiso: 'gestionar_permisos_admin',
         },
       },
     ],
   },
+
   {
     path: '/admin',
     component: MainLayout,
@@ -170,12 +179,16 @@ const routes = [
         path: 'dashboard',
         name: 'admin-dashboard',
         component: AdminDashboard,
+        meta: {
+          roles: ['ADMIN'],
+        },
       },
       {
         path: 'inventario',
         name: 'admin-inventario',
         component: InventarioView,
         meta: {
+          roles: ['ADMIN'],
           permiso: 'ver_inventario',
         },
       },
@@ -184,6 +197,7 @@ const routes = [
         name: 'admin-empleados',
         component: EmpleadosView,
         meta: {
+          roles: ['ADMIN'],
           permiso: 'ver_empleados',
         },
       },
@@ -192,6 +206,7 @@ const routes = [
         name: 'admin-reportes',
         component: ReportesView,
         meta: {
+          roles: ['ADMIN'],
           permiso: 'crear_reportes',
         },
       },
@@ -200,6 +215,7 @@ const routes = [
         name: 'admin-usuario-permisos',
         component: PermisosUsuarioView,
         meta: {
+          roles: ['ADMIN'],
           permiso: 'gestionar_permisos_cajero',
         },
       },
@@ -208,6 +224,7 @@ const routes = [
         name: 'admin-jornadas',
         component: JornadasView,
         meta: {
+          roles: ['ADMIN'],
           permiso: 'ver_jornadas',
         },
       },
@@ -216,6 +233,7 @@ const routes = [
         name: 'admin-cajas',
         component: CajasView,
         meta: {
+          roles: ['ADMIN'],
           permiso: 'ver_cajas',
         },
       },
@@ -224,11 +242,22 @@ const routes = [
         name: 'admin-solicitudes',
         component: SolicitudesView,
         meta: {
+          roles: ['ADMIN'],
           permiso: 'crear_solicitudes',
+        },
+      },
+      {
+        path: 'movimientos-carne',
+        name: 'admin-movimientos-carne',
+        component: MovimientosCarneView,
+        meta: {
+          roles: ['ADMIN'],
+          permiso: 'ver_movimientos_carne',
         },
       },
     ],
   },
+
   {
     path: '/cajero',
     component: MainLayout,
@@ -245,12 +274,16 @@ const routes = [
         path: 'dashboard',
         name: 'cajero-dashboard',
         component: CajeroDashboard,
+        meta: {
+          roles: ['CAJERO'],
+        },
       },
       {
         path: 'nuevo-pedido',
         name: 'cajero-nuevo-pedido',
         component: NuevoPedidoView,
         meta: {
+          roles: ['CAJERO'],
           permiso: 'crear_pedidos',
         },
       },
@@ -259,8 +292,8 @@ const routes = [
         name: 'cajero-catalogo-productos',
         component: CatalogoProductosView,
         meta: {
-          requiereAuth: true,
-          roles: ['CAJERO', 'ADMIN', 'SUPERADMIN'],
+          roles: ['CAJERO'],
+          permiso: 'ver_catalogo_pedidos',
         },
       },
       {
@@ -268,6 +301,7 @@ const routes = [
         name: 'cajero-registrar-pago',
         component: RegistrarPagoView,
         meta: {
+          roles: ['CAJERO'],
           permiso: 'registrar_pagos',
         },
       },
@@ -276,6 +310,7 @@ const routes = [
         name: 'cajero-historial',
         component: HistorialPedidosView,
         meta: {
+          roles: ['CAJERO'],
           permiso: 'ver_pedidos',
         },
       },
@@ -284,6 +319,7 @@ const routes = [
         name: 'cajero-reimprimir-ticket',
         component: ReimprimirTicketView,
         meta: {
+          roles: ['CAJERO'],
           permiso: 'reimprimir_ticket',
         },
       },
@@ -292,6 +328,7 @@ const routes = [
         name: 'cajero-caja',
         component: CajaView,
         meta: {
+          roles: ['CAJERO'],
           permiso: 'ver_cajas',
         },
       },
@@ -300,11 +337,13 @@ const routes = [
         name: 'cajero-stock-bebidas',
         component: StockBebidasView,
         meta: {
+          roles: ['CAJERO'],
           permiso: 'ver_stock_bebidas',
         },
       },
     ],
   },
+
   {
     path: '/:pathMatch(.*)*',
     redirect: '/login',
@@ -337,19 +376,39 @@ router.beforeEach((to) => {
 
   const rol = obtenerNombreRol(usuario)
 
-  if (to.meta.requiereAuth && !token) {
+  const requiereAuth = to.matched.some((record) => {
+    return record.meta?.requiereAuth
+  })
+
+  const requiereInvitado = to.matched.some((record) => {
+    return record.meta?.requiereInvitado
+  })
+
+  const rolesPermitidos = to.matched
+    .map((record) => record.meta?.roles)
+    .filter(Boolean)
+    .flat()
+
+  const permisosRequeridos = to.matched.map((record) => record.meta?.permiso).filter(Boolean)
+
+  if (requiereAuth && !token) {
     return '/login'
   }
 
-  if (to.meta.requiereInvitado && token) {
+  if (requiereInvitado && token) {
     return obtenerRutaPorRol(rol)
   }
 
-  if (to.meta.roles && !to.meta.roles.includes(rol)) {
+  if (rolesPermitidos.length > 0 && !rolesPermitidos.includes(rol)) {
     return obtenerRutaPorRol(rol)
   }
 
-  if (to.meta.permiso && !tienePermiso(usuario, to.meta.permiso)) {
+  const permisoFaltante = permisosRequeridos.find((permiso) => {
+    return !tienePermiso(usuario, permiso)
+  })
+
+  if (permisoFaltante) {
+    console.warn('Permiso faltante para ruta:', permisoFaltante)
     return obtenerRutaPorRol(rol)
   }
 

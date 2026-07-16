@@ -50,12 +50,20 @@ class Jornada extends Model
     }
 
     public function controlCarne()
-{
-    return $this->hasMany(
-        ControlCarneJornada::class,
-        'id_jornada',
-        'id_jornada'
-    );
-}
-    
+    {
+        return $this->hasMany(
+            ControlCarneJornada::class,
+            'id_jornada',
+            'id_jornada'
+        );
+    }
+
+    public function movimientosCarne()
+    {
+        return $this->hasMany(
+            MovimientoCarne::class,
+            'id_jornada',
+            'id_jornada'
+        );
+    }
 }

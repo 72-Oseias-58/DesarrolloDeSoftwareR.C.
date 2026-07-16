@@ -1,0 +1,23 @@
+.movimientos-carne-page {
+  width: 100%;
+}
+
+.movimientos-carne-card {
+  width: 100%;
+  border-radius: 18px;
+}
+
+.control-carne-card {
+  height: 100%;
+  border-radius: 14px;
+}
+
+@media (max-width: 600px) {
+  .movimientos-carne-page {
+    padding: 8px;
+  }
+
+  .movimientos-carne-card {
+    border-radius: 12px;
+  }
+}

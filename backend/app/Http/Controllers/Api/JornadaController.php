@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ControlCarneJornada;
 use App\Models\Jornada;
+use App\Models\MovimientoCarne;
 use App\Models\TipoCarne;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -17,8 +18,15 @@ class JornadaController extends Controller
     {
         $user = User::with('empleado')->find($request->user()->id);
 
-        if (!$user || !$user->empleado || !$user->empleado->id_sucursal) {
-            abort(403, 'El usuario ADMIN no tiene una sucursal asignada.');
+        if (
+            !$user
+            || !$user->empleado
+            || !$user->empleado->id_sucursal
+        ) {
+            abort(
+                403,
+                'El usuario ADMIN no tiene una sucursal asignada.'
+            );
         }
 
         return (int) $user->empleado->id_sucursal;
@@ -28,7 +36,10 @@ class JornadaController extends Controller
     {
         $idSucursal = $this->obtenerSucursalAdmin($request);
 
-        $jornadas = Jornada::with(['sucursal', 'controlCarne.tipoCarne'])
+        $jornadas = Jornada::with([
+            'sucursal',
+            'controlCarne.tipoCarne',
+        ])
             ->where('id_sucursal', $idSucursal)
             ->orderByDesc('fecha')
             ->paginate(15);
@@ -43,7 +54,10 @@ class JornadaController extends Controller
     {
         $idSucursal = $this->obtenerSucursalAdmin($request);
 
-        $jornada = Jornada::with(['sucursal', 'controlCarne.tipoCarne'])
+        $jornada = Jornada::with([
+            'sucursal',
+            'controlCarne.tipoCarne',
+        ])
             ->where('id_sucursal', $idSucursal)
             ->whereDate('fecha', now()->toDateString())
             ->first();
@@ -58,7 +72,9 @@ class JornadaController extends Controller
 
     public function tiposCarne()
     {
-        $tipos = TipoCarne::orderBy('nombre')->get();
+        $tipos = TipoCarne::query()
+            ->orderBy('nombre')
+            ->get();
 
         return response()->json([
             'message' => 'Tipos de carne obtenidos correctamente.',
@@ -69,20 +85,55 @@ class JornadaController extends Controller
     public function abrir(Request $request)
     {
         $idSucursal = $this->obtenerSucursalAdmin($request);
+        $idUsuario = (int) $request->user()->id;
         $fechaHoy = now()->toDateString();
 
         $data = $request->validate([
-            'carnes' => ['required', 'array', 'size:2'],
+            'carnes' => [
+                'required',
+                'array',
+                'size:2',
+            ],
 
-            'carnes.*.id_tipo_carne' => ['required', 'integer', 'exists:tipos_carne,id_tipo_carne'],
-            'carnes.*.cantidad_cruces' => ['required', 'numeric', 'min:0'],
-            'carnes.*.platos_estimados' => ['nullable', 'numeric', 'min:0'],
-            'carnes.*.cantidad_base_inicial' => ['required', 'numeric', 'min:0.01'],
-            'carnes.*.unidad_base' => ['required', 'string', 'max:50'],
-            'carnes.*.observacion' => ['nullable', 'string', 'max:1000'],
+            'carnes.*.id_tipo_carne' => [
+                'required',
+                'integer',
+                'exists:tipos_carne,id_tipo_carne',
+            ],
+
+            'carnes.*.cantidad_cruces' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+
+            'carnes.*.platos_estimados' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'carnes.*.cantidad_base_inicial' => [
+                'required',
+                'numeric',
+                'min:0.01',
+            ],
+
+            'carnes.*.unidad_base' => [
+                'required',
+                'string',
+                'max:50',
+            ],
+
+            'carnes.*.observacion' => [
+                'nullable',
+                'string',
+                'max:1000',
+            ],
         ]);
 
-        $jornadaExistente = Jornada::where('id_sucursal', $idSucursal)
+        $jornadaExistente = Jornada::query()
+            ->where('id_sucursal', $idSucursal)
             ->whereDate('fecha', $fechaHoy)
             ->first();
 
@@ -93,26 +144,55 @@ class JornadaController extends Controller
             ], 409);
         }
 
-        $idsTiposCarne = collect($data['carnes'])->pluck('id_tipo_carne')->toArray();
+        $idsTiposCarne = collect($data['carnes'])
+            ->pluck('id_tipo_carne')
+            ->map(fn ($id) => (int) $id)
+            ->toArray();
 
-        if (count($idsTiposCarne) !== count(array_unique($idsTiposCarne))) {
+        if (
+            count($idsTiposCarne)
+            !== count(array_unique($idsTiposCarne))
+        ) {
             throw ValidationException::withMessages([
-                'carnes' => ['No puedes repetir el mismo tipo de carne.'],
+                'carnes' => [
+                    'No puedes repetir el mismo tipo de carne.',
+                ],
             ]);
         }
 
-        $tiposCarne = TipoCarne::whereIn('id_tipo_carne', $idsTiposCarne)
-            ->pluck('nombre', 'id_tipo_carne');
+        $tiposCarne = TipoCarne::query()
+            ->whereIn('id_tipo_carne', $idsTiposCarne)
+            ->get()
+            ->keyBy('id_tipo_carne');
 
-        $nombres = $tiposCarne->map(fn ($nombre) => strtoupper($nombre))->values()->toArray();
+        $nombres = $tiposCarne
+            ->pluck('nombre')
+            ->map(
+                fn ($nombre) => strtoupper(
+                    trim((string) $nombre)
+                )
+            )
+            ->values()
+            ->toArray();
 
-        if (!in_array('CHANCHO', $nombres) || !in_array('POLLO', $nombres)) {
+        if (
+            !in_array('CHANCHO', $nombres, true)
+            || !in_array('POLLO', $nombres, true)
+        ) {
             throw ValidationException::withMessages([
-                'carnes' => ['Para abrir jornada debes registrar CHANCHO y POLLO.'],
+                'carnes' => [
+                    'Para abrir jornada debes registrar CHANCHO y POLLO.',
+                ],
             ]);
         }
 
-        $jornada = DB::transaction(function () use ($idSucursal, $fechaHoy, $data) {
+        $jornada = DB::transaction(function () use (
+            $idSucursal,
+            $idUsuario,
+            $fechaHoy,
+            $data,
+            $tiposCarne
+        ) {
             $jornada = Jornada::create([
                 'id_sucursal' => $idSucursal,
                 'fecha' => $fechaHoy,
@@ -122,16 +202,140 @@ class JornadaController extends Controller
             ]);
 
             foreach ($data['carnes'] as $carne) {
-                ControlCarneJornada::create([
+                $idTipoCarne = (int) $carne['id_tipo_carne'];
+
+                $tipoCarne = $tiposCarne->get($idTipoCarne);
+
+                if (!$tipoCarne) {
+                    throw ValidationException::withMessages([
+                        'carnes' => [
+                            'Uno de los tipos de carne no existe.',
+                        ],
+                    ]);
+                }
+
+                $nombreTipoCarne = strtoupper(
+                    trim((string) $tipoCarne->nombre)
+                );
+
+                $cantidadCruces = round(
+                    (float) $carne['cantidad_cruces'],
+                    2
+                );
+
+                $cantidadBaseInicial = round(
+                    (float) $carne['cantidad_base_inicial'],
+                    2
+                );
+
+                $unidadBase = strtoupper(
+                    trim((string) $carne['unidad_base'])
+                );
+
+                $unidadRegistrada = match ($nombreTipoCarne) {
+                    'CHANCHO' => 'CRUZ_CHANCHO',
+                    'POLLO' => 'CRUZ_POLLO',
+                    default => 'CRUZ',
+                };
+
+                $control = ControlCarneJornada::create([
                     'id_sucursal' => $idSucursal,
                     'id_jornada' => $jornada->id_jornada,
-                    'id_tipo_carne' => $carne['id_tipo_carne'],
-                    'cantidad_cruces' => $carne['cantidad_cruces'],
-                    'platos_estimados' => $carne['platos_estimados'] ?? null,
-                    'cantidad_base_inicial' => $carne['cantidad_base_inicial'],
-                    'cantidad_base_actual' => $carne['cantidad_base_inicial'],
-                    'unidad_base' => $carne['unidad_base'],
-                    'observacion' => $carne['observacion'] ?? null,
+                    'id_tipo_carne' => $idTipoCarne,
+
+                    'cantidad_cruces' => $cantidadCruces,
+
+                    'platos_estimados' =>
+                        isset($carne['platos_estimados'])
+                            ? (int) $carne['platos_estimados']
+                            : null,
+
+                    'cantidad_base_inicial' => number_format(
+                        $cantidadBaseInicial,
+                        2,
+                        '.',
+                        ''
+                    ),
+
+                    'cantidad_base_actual' => number_format(
+                        $cantidadBaseInicial,
+                        2,
+                        '.',
+                        ''
+                    ),
+
+                    'unidad_base' => $unidadBase,
+
+                    'observacion' =>
+                        $carne['observacion'] ?? null,
+                ]);
+
+                MovimientoCarne::create([
+                    'id_control_carne' =>
+                        $control->id_control_carne,
+
+                    'id_sucursal' => $idSucursal,
+
+                    'id_jornada' =>
+                        $jornada->id_jornada,
+
+                    'id_tipo_carne' =>
+                        $idTipoCarne,
+
+                    'id_user_crea' =>
+                        $idUsuario,
+
+                    'tipo_movimiento' =>
+                        'ENTRADA',
+
+                    'motivo' =>
+                        'APERTURA',
+
+                    'unidad_registrada' =>
+                        $unidadRegistrada,
+
+                    'cantidad_registrada' => number_format(
+                        $cantidadCruces,
+                        2,
+                        '.',
+                        ''
+                    ),
+
+                    'cantidad_base' => number_format(
+                        $cantidadBaseInicial,
+                        2,
+                        '.',
+                        ''
+                    ),
+
+                    'unidad_base' =>
+                        $unidadBase,
+
+                    'cantidad_anterior' =>
+                        '0.00',
+
+                    'cantidad_nueva' => number_format(
+                        $cantidadBaseInicial,
+                        2,
+                        '.',
+                        ''
+                    ),
+
+                    'referencia_tipo' =>
+                        'APERTURA_JORNADA',
+
+                    'referencia_id' =>
+                        $jornada->id_jornada,
+
+                    'origen' =>
+                        'APERTURA_JORNADA',
+
+                    'destino' =>
+                        null,
+
+                    'observacion' =>
+                        $carne['observacion']
+                        ?? "Cantidad inicial de {$nombreTipoCarne} registrada al abrir la jornada.",
                 ]);
             }
 
@@ -140,7 +344,12 @@ class JornadaController extends Controller
 
         return response()->json([
             'message' => 'Jornada abierta correctamente.',
-            'jornada' => $jornada->load(['sucursal', 'controlCarne.tipoCarne']),
+            'jornada' => $jornada->load([
+                'sucursal',
+                'controlCarne.tipoCarne',
+                'movimientosCarne.tipoCarne',
+                'movimientosCarne.usuarioCreador:id,name,usuario',
+            ]),
         ], 201);
     }
 
@@ -148,7 +357,8 @@ class JornadaController extends Controller
     {
         $idSucursal = $this->obtenerSucursalAdmin($request);
 
-        $jornada = Jornada::where('id_sucursal', $idSucursal)
+        $jornada = Jornada::query()
+            ->where('id_sucursal', $idSucursal)
             ->whereDate('fecha', now()->toDateString())
             ->where('estado', 'ABIERTA')
             ->first();
@@ -170,7 +380,12 @@ class JornadaController extends Controller
 
         return response()->json([
             'message' => 'Jornada cerrada correctamente.',
-            'jornada' => $jornada->load(['sucursal', 'controlCarne.tipoCarne']),
+            'jornada' => $jornada->load([
+                'sucursal',
+                'controlCarne.tipoCarne',
+                'movimientosCarne.tipoCarne',
+                'movimientosCarne.usuarioCreador:id,name,usuario',
+            ]),
         ]);
     }
 }

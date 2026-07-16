@@ -26,6 +26,8 @@ class DatabaseSeeder extends Seeder
 
             BebidasInventarioSeeder::class,
             CatalogoPedidoSeeder::class,
+
+            PermisosMovimientosCarneSeeder::class,
         ]);
     }
 }

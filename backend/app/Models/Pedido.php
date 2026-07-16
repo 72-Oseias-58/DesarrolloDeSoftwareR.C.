@@ -71,6 +71,24 @@ class Pedido extends Model
         );
     }
 
+    public function detalles()
+    {
+        return $this->hasMany(
+            DetallePedido::class,
+            'id_pedido',
+            'id_pedido'
+        );
+    }
+
+    public function movimientosCarne()
+    {
+        return $this->hasMany(
+            MovimientoCarne::class,
+            'referencia_id',
+            'id_pedido'
+        )->where('referencia_tipo', 'PEDIDO');
+    }
+
     public function estaPagado(): bool
     {
         return strtoupper((string) $this->estado) === 'PAGADO';
@@ -80,13 +98,4 @@ class Pedido extends Model
     {
         return $this->anulacion()->exists();
     }
- 
-public function detalles()
-{
-    return $this->hasMany(
-        DetallePedido::class,
-        'id_pedido',
-        'id_pedido'
-    );
-}
 }

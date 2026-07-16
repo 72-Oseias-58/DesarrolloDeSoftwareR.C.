@@ -1,9 +1,5 @@
-import {
-  computed,
-  defineComponent,
-  onMounted,
-  ref,
-} from 'vue'
+import { computed, defineComponent, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import api from '@/api/axios'
 
@@ -12,23 +8,28 @@ export default defineComponent({
 
   setup() {
     const $q = useQuasar()
-
+    const router = useRouter()
     const productos = ref([])
     const detalles = ref([])
     const tipoConsumo = ref('PARA_LLEVAR')
+
     const cargandoProductos = ref(false)
     const registrandoPedido = ref(false)
     const errorProductos = ref('')
 
+    const jornadaActual = ref(null)
+    const cargandoJornada = ref(false)
+    const errorJornada = ref('')
+
     const mostrarDialogoPuraCarne = ref(false)
 
     const formPuraCarne = ref({
-      tipo_carne_manual: 'CHANCHO',
-      cantidad_carne_manual: null,
-      unidad_carne_manual: 'COSTILLA_HUESO',
-      precio_unitario: null,
-      observacion: '',
-    })
+  tipo_carne_manual: 'CHANCHO',
+  unidad_carne_manual: 'MIN_COSTILLA',
+  cantidad_carne_manual: null,
+  precio_unitario: null,
+  observacion: '',
+})
 
     let siguienteUid = 1
 
@@ -55,64 +56,72 @@ export default defineComponent({
     ]
 
     const unidadesCarneManualPorTipo = {
-      CHANCHO: [
-        {
-          label: 'Costilla / hueso',
-          value: 'COSTILLA_HUESO',
-        },
-        {
-          label: 'Media costilla',
-          value: 'MEDIA_COSTILLA',
-        },
-        {
-          label: 'Costilla entera',
-          value: 'COSTILLA_ENTERA',
-        },
-        {
-          label: 'Cruz entera de chancho',
-          value: 'CRUZ_CHANCHO',
-        },
-        {
-          label: 'Porción de chancho',
-          value: 'PORCION_CHANCHO',
-        },
-      ],
+  CHANCHO: [
+    {
+      label: 'Costilla',
+      value: 'MIN_COSTILLA',
+    },
+    {
+      label: 'Costilla Entera',
+      value: 'COSTILLA_GRANDE',
+    },
+    {
+      label: 'Cruz de chancho',
+      value: 'CRUZ_CHANCHO',
+    },
+  ],
 
-      POLLO: [
-        {
-          label: 'Cuarto de pollo',
-          value: 'CUARTO_POLLO',
-        },
-        {
-          label: 'Medio pollo',
-          value: 'MEDIO_POLLO',
-        },
-        {
-          label: 'Pollo entero',
-          value: 'POLLO_ENTERO',
-        },
-        {
-          label: 'Cruz entera de pollo',
-          value: 'CRUZ_POLLO',
-        },
-        {
-          label: 'Porción de pollo',
-          value: 'PORCION_POLLO',
-        },
-      ],
-    }
+  POLLO: [
+    {
+      label: '1/4 de pollo',
+      value: 'CUARTO_POLLO',
+    },
+    {
+      label: '1/2 pollo',
+      value: 'MEDIO_POLLO',
+    },
+    {
+      label: '3/4 de pollo',
+      value: 'TRES_CUARTOS_POLLO',
+    },
+    {
+      label: 'Pollo entero',
+      value: 'POLLO_ENTERO',
+    },
+    {
+      label: 'Cruz de pollo',
+      value: 'CRUZ_POLLO',
+    },
+  ],
+}
+
+    const conversionCarneManual = {
+  CHANCHO: {
+    MIN_COSTILLA: 1,
+    COSTILLA_GRANDE: 12,
+    CRUZ_CHANCHO: 24,
+  },
+
+  POLLO: {
+    CUARTO_POLLO: 0.25,
+    MEDIO_POLLO: 0.5,
+    TRES_CUARTOS_POLLO: 0.75,
+    POLLO_ENTERO: 1,
+    CRUZ_POLLO: 2,
+  },
+}
 
     const opcionesPreparacion = [
       {
-        label: 'Mixto completo',
+        label: 'Plato mixto',
         value: 'MIXTO',
       },
       {
-        label: 'Arroz completo',
+        label: 'Plato con arroz completo',
         value: 'ARROZ',
       },
       {
-        label: 'Mote completo',
+        label: 'Plato con mote completo',
         value: 'MOTE',
       },
       {
@@ -120,7 +129,6 @@ export default defineComponent({
         value: 'PERSONALIZADO',
       },
     ]
-
     const cantidadProductos = computed(() => {
       return detalles.value.reduce((total, detalle) => {
         if (detalle.esPuraCarne) {
@@ -132,11 +140,50 @@ export default defineComponent({
     })
 
     const totalPedido = computed(() => {
-      return detalles.value.reduce(
-        (total, detalle) => total + subtotalDetalle(detalle),
-        0,
-      )
+      return detalles.value.reduce((total, detalle) => total + subtotalDetalle(detalle), 0)
     })
+
+    const consumoBaseFormPuraCarne = computed(() => {
+      return convertirPuraCarneAConsumoBase({
+        tipo_carne_manual: formPuraCarne.value.tipo_carne_manual,
+        cantidad_carne_manual: formPuraCarne.value.cantidad_carne_manual,
+        unidad_carne_manual: formPuraCarne.value.unidad_carne_manual,
+      })
+    })
+
+    const obtenerMensajeError = (error) => {
+      const errores = error.response?.data?.errors
+
+      if (errores) {
+        const primerError = Object.values(errores)[0]
+
+        if (Array.isArray(primerError)) {
+          return primerError[0]
+        }
+      }
+
+      return error.response?.data?.message || 'Ocurrió un error inesperado.'
+    }
+    const rangoPlatosChancho = (control) => {
+      const nombre = normalizarNombre(
+        control?.tipo_carne?.nombre || control?.tipoCarne?.nombre || '',
+      )
+
+      if (nombre !== 'CHANCHO') {
+        return ''
+      }
+
+      const cruces = Number(control?.cantidad_cruces || 0)
+
+      if (cruces <= 0) {
+        return ''
+      }
+
+      const minimo = Math.round(cruces * 22)
+      const maximo = Math.round(cruces * 26)
+
+      return `${minimo} a ${maximo} platos aprox.`
+    }
 
     const normalizarNombre = (nombre) => {
       return String(nombre || '')
@@ -150,22 +197,93 @@ export default defineComponent({
       return String(producto?.tipo_producto || '').toUpperCase() === 'BEBIDA'
     }
 
-    const usaInventario = (producto) => {
-      const prioridadStock = String(
-        producto?.prioridad_stock || '',
-      ).toUpperCase()
+    const esPlato = (producto) => {
+      return String(producto?.tipo_producto || '').toUpperCase() === 'PLATO'
+    }
 
-      return prioridadStock === 'INVENTARIO'
+    const prioridadProducto = (producto) => {
+      return String(producto?.prioridad_stock || '').toUpperCase()
+    }
+
+    const usaInventario = (producto) => {
+      return prioridadProducto(producto) === 'INVENTARIO'
     }
 
     const usaProduccionDiaria = (producto) => {
-      const prioridadStock = String(
-        producto?.prioridad_stock || '',
-      ).toUpperCase()
-
-      return prioridadStock === 'PRODUCCION_DIARIA' ||
-        Boolean(producto?.consume_carne)
+      return prioridadProducto(producto) === 'PRODUCCION_DIARIA' || Boolean(producto?.consume_carne)
     }
+
+    const esProductoIndependiente = (producto) => {
+      return esPlato(producto) && !Boolean(producto?.consume_carne) && !usaInventario(producto)
+    }
+
+    const obtenerConsumosCarneProducto = (producto) => {
+      const consumos = producto?.consumos_carne
+
+      if (!consumos || typeof consumos !== 'object') {
+        return {}
+      }
+
+      return consumos
+    }
+
+    const etiquetaControlProducto = (producto) => {
+      if (usaInventario(producto)) {
+        return 'INVENTARIO'
+      }
+
+      if (esProductoIndependiente(producto)) {
+        return 'INDEPENDIENTE'
+      }
+
+      const consumos = obtenerConsumosCarneProducto(producto)
+      const chancho = Number(consumos.CHANCHO || consumos.chancho || 0)
+      const pollo = Number(consumos.POLLO || consumos.pollo || 0)
+
+      if (chancho > 0 && pollo > 0) {
+        return 'MIXTO'
+      }
+
+      if (chancho > 0) {
+        return 'CHANCHO'
+      }
+
+      if (pollo > 0) {
+        return 'POLLO'
+      }
+
+      return producto?.prioridad_stock || 'SIN_STOCK'
+    }
+
+    const textoConsumoProducto = (producto) => {
+  const consumos = obtenerConsumosCarneProducto(producto)
+
+  const chancho = Number(
+    consumos.CHANCHO || consumos.chancho || 0,
+  )
+
+  const pollo = Number(
+    consumos.POLLO || consumos.pollo || 0,
+  )
+
+  const partes = []
+
+  if (chancho > 0) {
+    partes.push(
+      `${formatoCantidad(chancho)} MinCostillas`,
+    )
+  }
+
+  if (pollo > 0) {
+    partes.push(
+      `${formatoCantidad(pollo)} pollos`,
+    )
+  }
+
+  return partes.length > 0
+    ? `Consume: ${partes.join(' + ')} por unidad`
+    : ''
+}
 
     const stockDisponible = (producto) => {
       if (!usaInventario(producto)) {
@@ -192,10 +310,7 @@ export default defineComponent({
 
           return Number(detalle.producto.id_producto) === Number(idProducto)
         })
-        .reduce(
-          (total, detalle) => total + Number(detalle.cantidad || 0),
-          0,
-        )
+        .reduce((total, detalle) => total + Number(detalle.cantidad || 0), 0)
     }
 
     const stockRestanteProducto = (producto) => {
@@ -203,8 +318,7 @@ export default defineComponent({
         return null
       }
 
-      return stockDisponible(producto) -
-        cantidadEnPedidoProducto(producto.id_producto)
+      return stockDisponible(producto) - cantidadEnPedidoProducto(producto.id_producto)
     }
 
     const stockRestanteDetalle = (detalle) => {
@@ -216,8 +330,9 @@ export default defineComponent({
         return null
       }
 
-      return stockDisponible(detalle.producto) -
-        cantidadEnPedidoProducto(detalle.producto.id_producto)
+      return (
+        stockDisponible(detalle.producto) - cantidadEnPedidoProducto(detalle.producto.id_producto)
+      )
     }
 
     const puedeAgregarProducto = (producto) => {
@@ -234,7 +349,7 @@ export default defineComponent({
       }
 
       if (!usaInventario(detalle.producto)) {
-        return detalle.cantidad < 100
+        return Number(detalle.cantidad || 0) < 100
       }
 
       return stockRestanteDetalle(detalle) > 0
@@ -260,35 +375,129 @@ export default defineComponent({
       return `Stock: ${formatoCantidad(stock)}`
     }
 
+    const cargarJornadaActual = async () => {
+      cargandoJornada.value = true
+      errorJornada.value = ''
+
+      try {
+        const response = await api.get('/jornadas/actual')
+        jornadaActual.value = response.data?.jornada || null
+      } catch (error) {
+        jornadaActual.value = null
+        errorJornada.value = obtenerMensajeError(error)
+      } finally {
+        cargandoJornada.value = false
+      }
+    }
+
+    const obtenerControlCarneJornada = () => {
+      if (!jornadaActual.value) {
+        return []
+      }
+
+      if (Array.isArray(jornadaActual.value.control_carne)) {
+        return jornadaActual.value.control_carne
+      }
+
+      if (Array.isArray(jornadaActual.value.controlCarne)) {
+        return jornadaActual.value.controlCarne
+      }
+
+      return []
+    }
+
+    const nombreTipoCarne = (control) => {
+      return control?.tipo_carne?.nombre || control?.tipoCarne?.nombre || 'Carne'
+    }
+
+    const unidadBaseCarne = (control) => {
+      const unidad = String(control?.unidad_base || '').toUpperCase()
+
+      if (unidad === 'MIN_COSTILLA') {
+        return 'Costillas'
+      }
+
+      if (unidad === 'COSTILLA_GRANDE') {
+        return 'CostillasGrandes'
+      }
+
+      if (unidad === 'POLLO') {
+        return 'Pollos'
+      }
+
+      return unidad || ''
+    }
+    const esChanchoControl = (control) => {
+      const nombre = normalizarNombre(
+        control?.tipo_carne?.nombre || control?.tipoCarne?.nombre || '',
+      )
+
+      return nombre === 'CHANCHO'
+    }
+
+    const costillasGrandesChancho = (control) => {
+      if (!esChanchoControl(control)) {
+        return ''
+      }
+
+      const cruces = Number(control?.cantidad_cruces || 0)
+
+      return cruces * 2
+    }
+
+    const rangoMinCostillasChancho = (control) => {
+      if (!esChanchoControl(control)) {
+        return ''
+      }
+
+      const costillasGrandes = costillasGrandesChancho(control)
+
+      const minimo = costillasGrandes * 11
+      const maximo = costillasGrandes * 13
+
+      return `${minimo} a ${maximo} MinCostillas aprox.`
+    }
+
+    const porcentajeRestanteCarne = (control) => {
+      const inicial = Number(control?.cantidad_base_inicial || 0)
+      const actual = Number(control?.cantidad_base_actual || 0)
+
+      if (inicial <= 0) {
+        return 0
+      }
+
+      return Math.max(0, Math.min(100, (actual / inicial) * 100))
+    }
+
     const tieneGuarniciones = (producto) => {
-      return Array.isArray(producto?.guarniciones) &&
-        producto.guarniciones.length > 0
+      return Array.isArray(producto?.guarniciones) && producto.guarniciones.length > 0
     }
 
     const obtenerIdsPreparacion = (producto, tipo) => {
       const guarniciones = producto?.guarniciones || []
 
+      if (tipo === 'MIXTO') {
+        return guarniciones
+          .filter((guarnicion) => {
+            const nombre = normalizarNombre(guarnicion.nombre)
+            return nombre === 'ARROZ' || nombre === 'MOTE'
+          })
+          .map((guarnicion) => guarnicion.id_guarnicion)
+      }
+
       if (tipo === 'ARROZ') {
         return guarniciones
-          .filter(
-            (guarnicion) =>
-              normalizarNombre(guarnicion.nombre) !== 'MOTE',
-          )
+          .filter((guarnicion) => normalizarNombre(guarnicion.nombre) !== 'MOTE')
           .map((guarnicion) => guarnicion.id_guarnicion)
       }
 
       if (tipo === 'MOTE') {
         return guarniciones
-          .filter(
-            (guarnicion) =>
-              normalizarNombre(guarnicion.nombre) !== 'ARROZ',
-          )
+          .filter((guarnicion) => normalizarNombre(guarnicion.nombre) !== 'ARROZ')
           .map((guarnicion) => guarnicion.id_guarnicion)
       }
 
-      return guarniciones.map(
-        (guarnicion) => guarnicion.id_guarnicion,
-      )
+      return guarniciones.map((guarnicion) => guarnicion.id_guarnicion)
     }
 
     const aplicarPreparacion = (detalle) => {
@@ -300,17 +509,13 @@ export default defineComponent({
         return
       }
 
-      detalle.guarniciones = obtenerIdsPreparacion(
-        detalle.producto,
-        detalle.tipoPreparacion,
-      )
+      detalle.guarniciones = obtenerIdsPreparacion(detalle.producto, detalle.tipoPreparacion)
     }
 
     const opcionesUnidadCarne = (tipoCarne) => {
       const tipo = String(tipoCarne || 'CHANCHO').toUpperCase()
 
-      return unidadesCarneManualPorTipo[tipo] ||
-        unidadesCarneManualPorTipo.CHANCHO
+      return unidadesCarneManualPorTipo[tipo] || unidadesCarneManualPorTipo.CHANCHO
     }
 
     const obtenerUnidadDefaultPorTipo = (tipoCarne) => {
@@ -320,31 +525,67 @@ export default defineComponent({
     const unidadPerteneceAlTipo = (tipoCarne, unidad) => {
       const unidadNormalizada = String(unidad || '').toUpperCase()
 
-      return opcionesUnidadCarne(tipoCarne).some(
-        (opcion) => opcion.value === unidadNormalizada,
-      )
+      return opcionesUnidadCarne(tipoCarne).some((opcion) => opcion.value === unidadNormalizada)
     }
 
-    const cambiarTipoCarneForm = () => {
-      const tipoCarne = String(
-        formPuraCarne.value.tipo_carne_manual || 'CHANCHO',
-      ).toUpperCase()
+    const convertirPuraCarneAConsumoBase = (detalle) => {
+  const tipoCarne = String(
+    detalle?.tipo_carne_manual || '',
+  )
+    .toUpperCase()
+    .trim()
 
-      if (
-        !unidadPerteneceAlTipo(
-          tipoCarne,
-          formPuraCarne.value.unidad_carne_manual,
-        )
-      ) {
-        formPuraCarne.value.unidad_carne_manual =
-          obtenerUnidadDefaultPorTipo(tipoCarne)
+  const unidad = String(
+    detalle?.unidad_carne_manual || '',
+  )
+    .toUpperCase()
+    .trim()
+
+  const cantidad = Number(
+    detalle?.cantidad_carne_manual || 0,
+  )
+
+  if (
+    !['CHANCHO', 'POLLO'].includes(tipoCarne) ||
+    cantidad <= 0
+  ) {
+    return 0
+  }
+
+  const factor =
+    conversionCarneManual[tipoCarne]?.[unidad]
+
+  if (!factor) {
+    return 0
+  }
+
+  return Number((cantidad * factor).toFixed(2))
+}
+
+    const consumoBasePuraCarne = (detalle) => {
+      return convertirPuraCarneAConsumoBase(detalle)
+    }
+
+    const unidadBasePuraCarne = (tipoCarne) => {
+  const tipo = String(tipoCarne || '')
+    .toUpperCase()
+    .trim()
+
+  return tipo === 'POLLO'
+    ? 'Pollos'
+    : 'Costillas'
+}
+
+    const cambiarTipoCarneForm = () => {
+      const tipoCarne = String(formPuraCarne.value.tipo_carne_manual || 'CHANCHO').toUpperCase()
+
+      if (!unidadPerteneceAlTipo(tipoCarne, formPuraCarne.value.unidad_carne_manual)) {
+        formPuraCarne.value.unidad_carne_manual = obtenerUnidadDefaultPorTipo(tipoCarne)
       }
     }
 
     const cambiarTipoCarneDetalle = (detalle) => {
-      const tipoCarne = String(
-        detalle.tipo_carne_manual || 'CHANCHO',
-      ).toUpperCase()
+      const tipoCarne = String(detalle.tipo_carne_manual || 'CHANCHO').toUpperCase()
 
       if (!unidadPerteneceAlTipo(tipoCarne, detalle.unidad_carne_manual)) {
         detalle.unidad_carne_manual = obtenerUnidadDefaultPorTipo(tipoCarne)
@@ -366,14 +607,18 @@ export default defineComponent({
     }
 
     const etiquetaUnidadCarne = (tipoCarne, unidad) => {
-      const unidadNormalizada = String(unidad || '').toUpperCase()
+  const opciones = opcionesUnidadCarne(tipoCarne)
 
-      const opcion = opcionesUnidadCarne(tipoCarne).find(
-        (item) => item.value === unidadNormalizada,
-      )
+  const unidadNormalizada = String(unidad || '')
+    .toUpperCase()
+    .trim()
 
-      return opcion?.label || unidadNormalizada
-    }
+  return (
+    opciones.find(
+      (opcion) => opcion.value === unidadNormalizada,
+    )?.label || unidadNormalizada
+  )
+}
 
     const crearDetalle = (producto) => {
       const detalle = {
@@ -381,9 +626,7 @@ export default defineComponent({
         esPuraCarne: false,
         producto,
         cantidad: 1,
-        tipoPreparacion: tieneGuarniciones(producto)
-          ? 'MIXTO'
-          : null,
+        tipoPreparacion: tieneGuarniciones(producto) ? 'MIXTO' : null,
         guarniciones: [],
         observacion: '',
       }
@@ -401,33 +644,27 @@ export default defineComponent({
         esPuraCarne: true,
         producto: null,
         cantidad: 1,
-        tipo_carne_manual: String(
-          formPuraCarne.value.tipo_carne_manual || 'CHANCHO',
-        ).toUpperCase(),
-        cantidad_carne_manual: Number(
-          formPuraCarne.value.cantidad_carne_manual || 0,
-        ),
-        unidad_carne_manual: String(
-          formPuraCarne.value.unidad_carne_manual || '',
-        ).toUpperCase(),
-        precio_unitario: Number(
-          formPuraCarne.value.precio_unitario || 0,
-        ),
-        observacion:
-          formPuraCarne.value.observacion?.trim() || '',
+        tipo_carne_manual: String(formPuraCarne.value.tipo_carne_manual || 'CHANCHO').toUpperCase(),
+        cantidad_carne_manual: Number(formPuraCarne.value.cantidad_carne_manual || 0),
+        unidad_carne_manual: String(formPuraCarne.value.unidad_carne_manual || '').toUpperCase(),
+        precio_unitario: Number(formPuraCarne.value.precio_unitario || 0),
+        observacion: formPuraCarne.value.observacion?.trim() || '',
         guarniciones: [],
       }
     }
 
-    const resetFormPuraCarne = () => {
-      formPuraCarne.value = {
-        tipo_carne_manual: 'CHANCHO',
-        cantidad_carne_manual: null,
-        unidad_carne_manual: obtenerUnidadDefaultPorTipo('CHANCHO'),
-        precio_unitario: null,
-        observacion: '',
-      }
-    }
+    const crearFormularioPuraCarneInicial = () => ({
+  tipo_carne_manual: 'CHANCHO',
+  unidad_carne_manual: 'MIN_COSTILLA',
+  cantidad_carne_manual: null,
+  precio_unitario: null,
+  observacion: '',
+})
+
+const resetFormPuraCarne = () => {
+  formPuraCarne.value =
+    crearFormularioPuraCarneInicial()
+}
 
     const abrirDialogoPuraCarne = () => {
       resetFormPuraCarne()
@@ -440,21 +677,13 @@ export default defineComponent({
     }
 
     const validarFormPuraCarne = () => {
-      const tipoCarne = String(
-        formPuraCarne.value.tipo_carne_manual || '',
-      ).toUpperCase()
+      const tipoCarne = String(formPuraCarne.value.tipo_carne_manual || '').toUpperCase()
 
-      const unidad = String(
-        formPuraCarne.value.unidad_carne_manual || '',
-      ).toUpperCase()
+      const unidad = String(formPuraCarne.value.unidad_carne_manual || '').toUpperCase()
 
-      const cantidad = Number(
-        formPuraCarne.value.cantidad_carne_manual || 0,
-      )
+      const cantidad = Number(formPuraCarne.value.cantidad_carne_manual || 0)
 
-      const precio = Number(
-        formPuraCarne.value.precio_unitario || 0,
-      )
+      const precio = Number(formPuraCarne.value.precio_unitario || 0)
 
       if (!['CHANCHO', 'POLLO'].includes(tipoCarne)) {
         return 'Debe seleccionar CHANCHO o POLLO.'
@@ -466,6 +695,10 @@ export default defineComponent({
 
       if (!unidadPerteneceAlTipo(tipoCarne, unidad)) {
         return `La unidad seleccionada no corresponde a ${tipoCarne}.`
+      }
+
+      if (convertirPuraCarneAConsumoBase(formPuraCarne.value) <= 0) {
+        return 'La unidad o cantidad de carne no es válida.'
       }
 
       if (cantidad <= 0) {
@@ -505,23 +738,6 @@ export default defineComponent({
       cerrarDialogoPuraCarne()
     }
 
-    const obtenerMensajeError = (error) => {
-      const errores = error.response?.data?.errors
-
-      if (errores) {
-        const primerError = Object.values(errores)[0]
-
-        if (Array.isArray(primerError)) {
-          return primerError[0]
-        }
-      }
-
-      return (
-        error.response?.data?.message ||
-        'Ocurrió un error inesperado.'
-      )
-    }
-
     const cargarProductos = async () => {
       cargandoProductos.value = true
       errorProductos.value = ''
@@ -529,15 +745,17 @@ export default defineComponent({
       try {
         const response = await api.get('/productos-venta')
 
-        productos.value = Array.isArray(response.data?.productos)
-          ? response.data.productos
-          : []
+        productos.value = Array.isArray(response.data?.productos) ? response.data.productos : []
       } catch (error) {
         errorProductos.value = obtenerMensajeError(error)
         productos.value = []
       } finally {
         cargandoProductos.value = false
       }
+    }
+
+    const actualizarPantalla = async () => {
+      await Promise.all([cargarProductos(), cargarJornadaActual()])
     }
 
     const agregarProducto = (producto) => {
@@ -570,9 +788,7 @@ export default defineComponent({
       const nuevoDetalle = crearDetalle(detalleOriginal.producto)
 
       nuevoDetalle.tipoPreparacion = 'PERSONALIZADO'
-      nuevoDetalle.guarniciones = [
-        ...detalleOriginal.guarniciones,
-      ]
+      nuevoDetalle.guarniciones = [...detalleOriginal.guarniciones]
 
       detalles.value.push(nuevoDetalle)
 
@@ -597,8 +813,7 @@ export default defineComponent({
         if (usaInventario(detalle.producto)) {
           $q.notify({
             type: 'warning',
-            message:
-              `No hay más stock disponible para ${detalle.producto.nombre}.`,
+            message: `No hay más stock disponible para ${detalle.producto.nombre}.`,
             position: 'top',
             timeout: 2500,
           })
@@ -625,19 +840,14 @@ export default defineComponent({
         return Number(detalle.precio_unitario || 0)
       }
 
-      return (
-        Number(detalle.producto?.precio || 0) *
-        Number(detalle.cantidad || 0)
-      )
+      return Number(detalle.producto?.precio || 0) * Number(detalle.cantidad || 0)
     }
 
     const opcionesGuarniciones = (producto) => {
-      return (producto?.guarniciones || []).map(
-        (guarnicion) => ({
-          label: guarnicion.nombre,
-          value: guarnicion.id_guarnicion,
-        }),
-      )
+      return (producto?.guarniciones || []).map((guarnicion) => ({
+        label: guarnicion.nombre,
+        value: guarnicion.id_guarnicion,
+      }))
     }
 
     const obtenerGuarnicionesSeleccionadas = (detalle) => {
@@ -645,11 +855,8 @@ export default defineComponent({
         return []
       }
 
-      return (detalle.producto?.guarniciones || []).filter(
-        (guarnicion) =>
-          detalle.guarniciones.includes(
-            guarnicion.id_guarnicion,
-          ),
+      return (detalle.producto?.guarniciones || []).filter((guarnicion) =>
+        detalle.guarniciones.includes(guarnicion.id_guarnicion),
       )
     }
 
@@ -696,9 +903,7 @@ export default defineComponent({
           })
         }
 
-        productosInventario.get(idProducto).cantidad += Number(
-          detalle.cantidad || 0,
-        )
+        productosInventario.get(idProducto).cantidad += Number(detalle.cantidad || 0)
       }
 
       for (const item of productosInventario.values()) {
@@ -717,21 +922,13 @@ export default defineComponent({
     }
 
     const validarDetallePuraCarne = (detalle) => {
-      const tipoCarne = String(
-        detalle.tipo_carne_manual || '',
-      ).toUpperCase()
+      const tipoCarne = String(detalle.tipo_carne_manual || '').toUpperCase()
 
-      const unidad = String(
-        detalle.unidad_carne_manual || '',
-      ).toUpperCase()
+      const unidad = String(detalle.unidad_carne_manual || '').toUpperCase()
 
-      const cantidad = Number(
-        detalle.cantidad_carne_manual || 0,
-      )
+      const cantidad = Number(detalle.cantidad_carne_manual || 0)
 
-      const precio = Number(
-        detalle.precio_unitario || 0,
-      )
+      const precio = Number(detalle.precio_unitario || 0)
 
       if (!['CHANCHO', 'POLLO'].includes(tipoCarne)) {
         return 'La pura carne debe ser CHANCHO o POLLO.'
@@ -743,6 +940,10 @@ export default defineComponent({
 
       if (!unidadPerteneceAlTipo(tipoCarne, unidad)) {
         return `La unidad de pura carne no corresponde a ${tipoCarne}.`
+      }
+
+      if (convertirPuraCarneAConsumoBase(detalle) <= 0) {
+        return 'La unidad o cantidad de pura carne no es válida.'
       }
 
       if (cantidad <= 0) {
@@ -757,6 +958,10 @@ export default defineComponent({
     }
 
     const validarPedido = () => {
+      if (detalles.value.length === 0) {
+        return 'Debe agregar al menos un producto al pedido.'
+      }
+
       const errorStock = validarStockInventario()
 
       if (errorStock) {
@@ -774,12 +979,9 @@ export default defineComponent({
           continue
         }
 
-        if (
-  tieneGuarniciones(detalle.producto) &&
-  detalle.guarniciones.length < 1
-) {
-  return `${detalle.producto.nombre} debe tener mínimo 1 guarnición.`
-}
+        if (tieneGuarniciones(detalle.producto) && detalle.guarniciones.length < 1) {
+          return `${detalle.producto.nombre} debe tener mínimo 1 guarnición.`
+        }
 
         if (Number(detalle.producto?.precio || 0) <= 0) {
           return `${detalle.producto.nombre} no tiene precio válido.`
@@ -793,26 +995,18 @@ export default defineComponent({
       if (detalle.esPuraCarne) {
         return {
           es_pura_carne: true,
-          tipo_carne_manual: String(
-            detalle.tipo_carne_manual || '',
-          ).toUpperCase(),
-          cantidad_carne_manual: Number(
-            detalle.cantidad_carne_manual || 0,
-          ),
-          unidad_carne_manual: String(
-            detalle.unidad_carne_manual || '',
-          ).toUpperCase(),
+          tipo_carne_manual: String(detalle.tipo_carne_manual || '').toUpperCase(),
+          cantidad_carne_manual: Number(detalle.cantidad_carne_manual || 0),
+          unidad_carne_manual: String(detalle.unidad_carne_manual || '').toUpperCase(),
           precio_unitario: Number(detalle.precio_unitario || 0),
-          observacion:
-            detalle.observacion?.trim() || null,
+          observacion: detalle.observacion?.trim() || null,
         }
       }
 
       return {
         id_producto: detalle.producto.id_producto,
         cantidad: detalle.cantidad,
-        observacion:
-          detalle.observacion?.trim() || null,
+        observacion: detalle.observacion?.trim() || null,
         guarniciones: detalle.guarniciones,
       }
     }
@@ -854,7 +1048,12 @@ export default defineComponent({
         detalles.value = []
         tipoConsumo.value = 'PARA_LLEVAR'
 
-        await cargarProductos()
+        await router.push({
+          path: '/cajero/registrar-pago',
+          query: {
+            pedido: pedido?.id_pedido,
+          },
+        })
       } catch (error) {
         $q.notify({
           type: 'negative',
@@ -863,7 +1062,7 @@ export default defineComponent({
           timeout: 4000,
         })
 
-        await cargarProductos()
+        await actualizarPantalla()
       } finally {
         registrandoPedido.value = false
       }
@@ -906,7 +1105,7 @@ export default defineComponent({
     }
 
     onMounted(async () => {
-      await cargarProductos()
+      await actualizarPantalla()
     })
 
     return {
@@ -921,13 +1120,20 @@ export default defineComponent({
       registrandoPedido,
       errorProductos,
 
+      jornadaActual,
+      cargandoJornada,
+      errorJornada,
+
       mostrarDialogoPuraCarne,
       formPuraCarne,
 
       cantidadProductos,
       totalPedido,
+      consumoBaseFormPuraCarne,
 
       cargarProductos,
+      cargarJornadaActual,
+      actualizarPantalla,
 
       abrirDialogoPuraCarne,
       cerrarDialogoPuraCarne,
@@ -945,8 +1151,10 @@ export default defineComponent({
 
       tieneGuarniciones,
       esBebida,
+      esPlato,
       usaInventario,
       usaProduccionDiaria,
+      esProductoIndependiente,
       estaAgotado,
       stockDisponible,
       stockRestanteProducto,
@@ -954,17 +1162,32 @@ export default defineComponent({
       puedeAgregarProducto,
       puedeAumentarCantidad,
       textoStockProducto,
+      textoConsumoProducto,
+      etiquetaControlProducto,
+
+      obtenerControlCarneJornada,
+      nombreTipoCarne,
+      unidadBaseCarne,
+      porcentajeRestanteCarne,
 
       opcionesUnidadCarne,
       cambiarTipoCarneForm,
       cambiarTipoCarneDetalle,
       etiquetaTipoCarne,
       etiquetaUnidadCarne,
+      consumoBasePuraCarne,
+      unidadBasePuraCarne,
 
       iconoProducto,
       formatoDinero,
       formatoCantidad,
       confirmarPedido,
+
+      rangoPlatosChancho,
+
+      esChanchoControl,
+      costillasGrandesChancho,
+      rangoMinCostillasChancho,
     }
   },
 })

@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\CajaController;
 use App\Http\Controllers\Api\ProductoVentaController;
 use App\Http\Controllers\Api\PedidoController;
 use App\Http\Controllers\Api\InventarioController;
+use App\Http\Controllers\Api\PagoController;
+use App\Http\Controllers\Api\MovimientoCarneController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -22,24 +24,34 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
 
+    // Compartidas
+    Route::get('/jornadas/actual', [JornadaController::class, 'actual']);
+    Route::get('/tipos-carne', [JornadaController::class, 'tiposCarne']);
+
     // Permisos usuario
     Route::get('/usuarios/{id}/permisos', [PermisoUsuarioController::class, 'index']);
     Route::put('/usuarios/{id}/permisos', [PermisoUsuarioController::class, 'update']);
 
     // Pruebas permisos
     Route::get('/permiso/prueba-sucursales', function () {
-        return response()->json(['message' => 'Tienes permiso para ver sucursales.']);
+        return response()->json([
+            'message' => 'Tienes permiso para ver sucursales.',
+        ]);
     })->middleware('permission:ver_sucursales');
 
     Route::get('/permiso/prueba-empleados', function () {
-        return response()->json(['message' => 'Tienes permiso para ver empleados.']);
+        return response()->json([
+            'message' => 'Tienes permiso para ver empleados.',
+        ]);
     })->middleware('permission:ver_empleados');
 
     // Superadmin
     Route::middleware('role:SUPERADMIN')->group(function () {
 
         Route::get('/superadmin/prueba', function () {
-            return response()->json(['message' => 'Ruta exclusiva para SUPERADMIN']);
+            return response()->json([
+                'message' => 'Ruta exclusiva para SUPERADMIN',
+            ]);
         });
 
         Route::patch('/usuarios/{id}/rol', [PermisoUsuarioController::class, 'cambiarRol']);
@@ -87,7 +99,9 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware('role:ADMIN')->group(function () {
 
         Route::get('/admin/prueba', function () {
-            return response()->json(['message' => 'Ruta exclusiva para ADMIN']);
+            return response()->json([
+                'message' => 'Ruta exclusiva para ADMIN',
+            ]);
         });
 
         Route::get('/empleados', [EmpleadoController::class, 'index'])
@@ -108,12 +122,6 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/jornadas', [JornadaController::class, 'index'])
             ->middleware('permission:ver_jornadas');
 
-        Route::get('/jornadas/actual', [JornadaController::class, 'actual'])
-            ->middleware('permission:ver_jornadas');
-
-        Route::get('/tipos-carne', [JornadaController::class, 'tiposCarne'])
-            ->middleware('permission:ver_jornadas');
-
         Route::post('/jornadas/abrir', [JornadaController::class, 'abrir'])
             ->middleware('permission:abrir_jornada');
 
@@ -124,15 +132,28 @@ Route::middleware('auth:api')->group(function () {
 
         Route::get('/cajas', [CajaController::class, 'index'])
             ->middleware('permission:ver_cajas');
+            // Movimientos de carne
+Route::get(
+    '/admin/movimientos-carne',
+    [MovimientoCarneController::class, 'index']
+)->middleware('permission:ver_movimientos_carne');
+
+Route::post(
+    '/admin/movimientos-carne',
+    [MovimientoCarneController::class, 'store']
+)->middleware('permission:registrar_movimientos_carne');
     });
 
     // Cajero
     Route::middleware('role:CAJERO')->group(function () {
 
         Route::get('/cajero/prueba', function () {
-            return response()->json(['message' => 'Ruta exclusiva para CAJERO']);
+            return response()->json([
+                'message' => 'Ruta exclusiva para CAJERO',
+            ]);
         });
 
+        // Caja
         Route::get('/cajero/caja/actual', [CajaController::class, 'actual'])
             ->middleware('permission:ver_cajas');
 
@@ -142,6 +163,7 @@ Route::middleware('auth:api')->group(function () {
         Route::patch('/cajero/caja/cerrar', [CajaController::class, 'cerrar'])
             ->middleware('permission:cerrar_caja');
 
+        // Catálogo
         Route::get('/productos-venta', [ProductoVentaController::class, 'index'])
             ->middleware('permission:crear_pedidos');
 
@@ -159,16 +181,22 @@ Route::middleware('auth:api')->group(function () {
             ->whereNumber('id')
             ->middleware('permission:eliminar_catalogo_pedidos');
 
+        // Pedidos
         Route::post('/pedidos', [PedidoController::class, 'store'])
             ->middleware('permission:crear_pedidos');
 
         Route::get('/pedidos/pendientes', [PedidoController::class, 'pendientes'])
             ->middleware('permission:ver_pedidos');
 
-        Route::post('/pedidos/{id}/pago', [PedidoController::class, 'registrarPago'])
+        // Pagos
+        Route::get('/pagos/pedidos-pendientes', [PagoController::class, 'pedidosPendientes'])
+            ->middleware('permission:registrar_pagos');
+
+        Route::post('/pedidos/{id}/pagar', [PagoController::class, 'pagar'])
             ->whereNumber('id')
             ->middleware('permission:registrar_pagos');
 
+        // Bebidas
         Route::get('/inventario/bebidas', [InventarioController::class, 'bebidas'])
             ->middleware('permission:ver_stock_bebidas');
 
