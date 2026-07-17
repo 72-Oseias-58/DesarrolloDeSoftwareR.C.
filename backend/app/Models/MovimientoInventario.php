@@ -17,7 +17,7 @@ class MovimientoInventario extends Model
         'id_user_crea',
         'tipo_movimiento',
         'motivo',
-        'cantidad',
+        'cantidad', 
         'stock_anterior',
         'stock_nuevo',
         'referencia_tipo',
