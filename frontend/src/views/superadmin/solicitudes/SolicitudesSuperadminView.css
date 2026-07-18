@@ -1,15 +1,14 @@
-.solicitudes-page {
-  padding: 24px;
-}
-
-.admin-module-card {
+.solicitudes-superadmin-card {
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.94);
 }
 
-.solicitud-dialog {
-  width: 700px;
-  max-width: 95vw;
+.filtros-card {
+  border-radius: 16px;
+}
+
+.detalle-solicitud-card {
+  width: 760px;
+  max-width: 96vw;
   border-radius: 20px;
 }
 
@@ -29,10 +28,6 @@
 }
 
 @media (max-width: 600px) {
-  .solicitudes-page {
-    padding: 8px;
-  }
-
   .detalle-linea {
     align-items: flex-start;
     flex-direction: column;

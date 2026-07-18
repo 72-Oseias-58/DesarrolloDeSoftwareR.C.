@@ -15,10 +15,26 @@ return new class extends Migration
             $table->unsignedInteger('id_insumo');
             $table->unsignedBigInteger('id_user_crea');
 
-            $table->integer('stock_actual')->nullable();
+            $table->decimal(
+                'stock_actual',
+                10,
+                2
+            )->default(0);
 
-            $table->dateTime('created_at')->nullable()->useCurrent();
-            $table->dateTime('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
+            $table->decimal(
+                'stock_minimo',
+                10,
+                2
+            )->default(0);
+
+            $table->dateTime('created_at')
+                ->nullable()
+                ->useCurrent();
+
+            $table->dateTime('updated_at')
+                ->nullable()
+                ->useCurrent()
+                ->useCurrentOnUpdate();
 
             $table->foreign('id_sucursal')
                 ->references('id_sucursal')
@@ -37,6 +53,23 @@ return new class extends Migration
                 ->on('users')
                 ->onUpdate('cascade')
                 ->onDelete('restrict');
+
+            $table->unique(
+                [
+                    'id_sucursal',
+                    'id_insumo',
+                ],
+                'inventarios_sucursal_insumo_unique'
+            );
+
+            $table->index(
+                [
+                    'id_sucursal',
+                    'stock_actual',
+                    'stock_minimo',
+                ],
+                'inventarios_alertas_idx'
+            );
         });
     }
 

@@ -232,7 +232,28 @@ class PermisosSeeder extends Seeder
                 'nombre' => 'Crear solicitudes',
                 'slug' => 'crear_solicitudes',
                 'descripcion' => 'Permite crear solicitudes',
-            ],
+            ],// Pantallas
+[   
+    'nombre' => 'Ver pantallas',
+    'slug' => 'ver_pantallas',
+    'descripcion' => 'Permite consultar las pantallas configuradas en la sucursal',
+],
+[
+    'nombre' => 'Crear pantallas',
+    'slug' => 'crear_pantallas',
+    'descripcion' => 'Permite registrar pantallas en la sucursal',
+],
+[
+    'nombre' => 'Editar pantallas',
+    'slug' => 'editar_pantallas',
+    'descripcion' => 'Permite modificar pantallas y sus áreas asignadas',
+],
+[
+    'nombre' => 'Eliminar pantallas',
+    'slug' => 'eliminar_pantallas',
+    'descripcion' => 'Permite eliminar pantallas de la sucursal',
+],
+            
         ];
 
         foreach ($permisos as $permiso) {
@@ -280,34 +301,40 @@ class PermisosSeeder extends Seeder
         ];
 
         $permisosAdmin = [
-            'ver_empleados',
-            'crear_empleados',
-            'editar_empleados',
-            'cambiar_estado_empleados',
+    'ver_empleados',
+    'crear_empleados',
+    'editar_empleados',
+    'cambiar_estado_empleados',
 
-            'crear_cajeros',
-            'gestionar_permisos_cajero',
-            'ascender_empleado_cajero',
-            'degradar_cajero_empleado',
+    'crear_cajeros',
+    'gestionar_permisos_cajero',
+    'ascender_empleado_cajero',
+    'degradar_cajero_empleado',
 
-            'ver_inventario',
-            'crear_inventario',
-            'editar_inventario',
+    'ver_inventario',
+    'crear_inventario',
+    'editar_inventario',
 
-            'ver_jornadas',
-            'abrir_jornada',
-            'cerrar_jornada',
+    'ver_jornadas',
+    'abrir_jornada',
+    'cerrar_jornada',
 
-            'ver_cajas',
+    'ver_cajas',
 
-            'ver_compras_internas',
-            'registrar_compras_internas',
+    'ver_compras_internas',
+    'registrar_compras_internas',
 
-            'crear_reportes',
-            'ver_reportes_jornada',
+    'crear_reportes',
+    'ver_reportes_jornada',
 
-            'crear_solicitudes',
-        ];
+    'crear_solicitudes',
+
+    // Pantallas
+    'ver_pantallas',
+    'crear_pantallas',
+    'editar_pantallas',
+    'eliminar_pantallas',
+];
 
         $permisosCajero = [
             'ver_cajas',

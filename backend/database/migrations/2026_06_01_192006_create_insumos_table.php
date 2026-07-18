@@ -11,20 +11,49 @@ return new class extends Migration
         Schema::create('insumos', function (Blueprint $table) {
             $table->increments('id_insumo');
 
-            $table->string('nombre', 100)->nullable();
-            $table->string('unidad_medida', 50)->nullable();
-            $table->string('prioridad_stock', 50)->nullable();
-
+            $table->unsignedBigInteger('id_sucursal');
             $table->unsignedInteger('id_categoria_insumo');
 
-            $table->dateTime('created_at')->nullable()->useCurrent();
-            $table->dateTime('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
+            $table->string('nombre', 100);
+            $table->string('unidad_medida', 50);
+            $table->string('prioridad_stock', 50);
+
+            $table->dateTime('created_at')
+                ->nullable()
+                ->useCurrent();
+
+            $table->dateTime('updated_at')
+                ->nullable()
+                ->useCurrent()
+                ->useCurrentOnUpdate();
+
+            $table->foreign('id_sucursal')
+                ->references('id_sucursal')
+                ->on('sucursales')
+                ->onUpdate('cascade')
+                ->onDelete('restrict');
 
             $table->foreign('id_categoria_insumo')
                 ->references('id_categoria_insumo')
                 ->on('categorias_insumos')
                 ->onUpdate('cascade')
                 ->onDelete('restrict');
+
+            $table->unique(
+                [
+                    'id_sucursal',
+                    'nombre',
+                ],
+                'insumos_sucursal_nombre_unique'
+            );
+
+            $table->index(
+                [
+                    'id_sucursal',
+                    'id_categoria_insumo',
+                ],
+                'insumos_sucursal_categoria_idx'
+            );
         });
     }
 

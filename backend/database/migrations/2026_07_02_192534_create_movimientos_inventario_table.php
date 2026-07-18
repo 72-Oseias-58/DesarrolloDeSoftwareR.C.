@@ -16,17 +16,47 @@ return new class extends Migration
             $table->unsignedInteger('id_insumo');
             $table->unsignedBigInteger('id_user_crea');
 
-            $table->string('tipo_movimiento', 30);
-            $table->string('motivo', 50);
+            $table->string(
+                'tipo_movimiento',
+                30
+            );
 
-            $table->decimal('cantidad', 10, 2);
-            $table->decimal('stock_anterior', 10, 2);
-            $table->decimal('stock_nuevo', 10, 2);
+            $table->string(
+                'motivo',
+                50
+            );
 
-            $table->string('referencia_tipo', 50)->nullable();
-            $table->unsignedBigInteger('referencia_id')->nullable();
+            $table->decimal(
+                'cantidad',
+                10,
+                2
+            );
 
-            $table->string('observacion', 255)->nullable();
+            $table->decimal(
+                'stock_anterior',
+                10,
+                2
+            );
+
+            $table->decimal(
+                'stock_nuevo',
+                10,
+                2
+            );
+
+            $table->string(
+                'referencia_tipo',
+                50
+            )->nullable();
+
+            $table->unsignedBigInteger(
+                'referencia_id'
+            )->nullable();
+
+            $table->string(
+                'observacion',
+                255
+            )->nullable();
 
             $table->dateTime('created_at')
                 ->nullable()
@@ -61,16 +91,22 @@ return new class extends Migration
                 ->onUpdate('cascade')
                 ->onDelete('restrict');
 
-            $table->index([
-                'id_sucursal',
-                'id_jornada',
-                'id_insumo',
-            ], 'mov_inv_sucursal_jornada_insumo_idx');
+            $table->index(
+                [
+                    'id_sucursal',
+                    'id_jornada',
+                    'id_insumo',
+                ],
+                'mov_inv_sucursal_jornada_insumo_idx'
+            );
 
-            $table->index([
-                'tipo_movimiento',
-                'motivo',
-            ], 'mov_inv_tipo_motivo_idx');
+            $table->index(
+                [
+                    'tipo_movimiento',
+                    'motivo',
+                ],
+                'mov_inv_tipo_motivo_idx'
+            );
         });
     }
 

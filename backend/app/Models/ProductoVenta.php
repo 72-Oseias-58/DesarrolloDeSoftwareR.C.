@@ -21,6 +21,7 @@ class ProductoVenta extends Model
         'imagen',
         'id_categoria_producto',
         'id_insumo',
+        'id_sucursal',
     ];
 
     protected $casts = [
@@ -43,13 +44,13 @@ class ProductoVenta extends Model
     }
 
     public function insumo()
-    {
-        return $this->belongsTo(
-            Insumo::class,
-            'id_insumo',
-            'id_insumo'
-        );
-    }
+{
+    return $this->belongsTo(
+        Insumo::class,
+        'id_insumo',
+        'id_insumo'
+    );
+}
 
     public function guarniciones()
     {
@@ -69,4 +70,13 @@ class ProductoVenta extends Model
             'id_producto'
         );
     }
+    public function sucursal()
+{
+    return $this->belongsTo(
+        Sucursal::class,
+        'id_sucursal',
+        'id_sucursal'
+    );
+}
+
 }

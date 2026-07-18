@@ -11,50 +11,6 @@ class BebidasInventarioSeeder extends Seeder
     {
         $now = now();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Categoría de insumo: Bebidas
-        |--------------------------------------------------------------------------
-        */
-
-        $idCategoriaInsumoBebida = DB::table('categorias_insumos')
-            ->whereRaw('UPPER(nombre) = ?', ['BEBIDAS'])
-            ->value('id_categoria_insumo');
-
-        if (!$idCategoriaInsumoBebida) {
-            $idCategoriaInsumoBebida = DB::table('categorias_insumos')
-                ->insertGetId([
-                    'nombre' => 'Bebidas',
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Categoría de producto: Bebidas
-        |--------------------------------------------------------------------------
-        */
-
-        $idCategoriaProductoBebida = DB::table('categorias_productos')
-            ->whereRaw('UPPER(nombre) = ?', ['BEBIDAS'])
-            ->value('id_categoria_producto');
-
-        if (!$idCategoriaProductoBebida) {
-            $idCategoriaProductoBebida = DB::table('categorias_productos')
-                ->insertGetId([
-                    'nombre' => 'Bebidas',
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Usuario creador
-        |--------------------------------------------------------------------------
-        */
-
         $idUserCrea = DB::table('users')
             ->orderBy('id')
             ->value('id');
@@ -63,157 +19,156 @@ class BebidasInventarioSeeder extends Seeder
             return;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Sucursales
-        |--------------------------------------------------------------------------
-        */
+        $idCategoriaProductoBebida = DB::table(
+            'categorias_productos'
+        )
+            ->whereRaw(
+                'UPPER(nombre) = ?',
+                ['BEBIDAS']
+            )
+            ->value('id_categoria_producto');
+
+        if (!$idCategoriaProductoBebida) {
+            $idCategoriaProductoBebida = DB::table(
+                'categorias_productos'
+            )->insertGetId([
+                'nombre' => 'Bebidas',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
 
         $sucursales = DB::table('sucursales')
             ->select('id_sucursal')
             ->get();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Bebidas base actuales
-        |--------------------------------------------------------------------------
-        */
-
         $bebidasBase = [
             [
                 'nombre' => 'Coca-Cola 2 litros',
-                'descripcion' => 'Refresco Coca-Cola de 2 litros.',
+                'descripcion' =>
+                    'Refresco Coca-Cola de 2 litros.',
                 'precio' => 15.00,
                 'unidad_medida' => 'UNIDAD',
             ],
             [
                 'nombre' => 'Fanta 500 ml',
-                'descripcion' => 'Refresco Fanta de 500 ml.',
+                'descripcion' =>
+                    'Refresco Fanta de 500 ml.',
                 'precio' => 7.00,
                 'unidad_medida' => 'UNIDAD',
             ],
         ];
 
-        foreach ($bebidasBase as $bebida) {
-            $this->crearORepararBebida(
-                $bebida['nombre'],
-                $bebida['descripcion'],
-                $bebida['precio'],
-                $bebida['unidad_medida'],
-                $idCategoriaInsumoBebida,
-                $idCategoriaProductoBebida,
-                $idUserCrea,
-                $sucursales
-            );
-        }
+        foreach ($sucursales as $sucursal) {
+            $idSucursal = (int) $sucursal->id_sucursal;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Reparar bebidas antiguas huérfanas
-        |--------------------------------------------------------------------------
-        | Caso detectado:
-        | - Coca-Cola personal
-        | - tipo_producto = BEBIDA
-        | - prioridad_stock = INVENTARIO
-        | - id_insumo = NULL
-        |
-        | Toda bebida de productos_venta debe tener:
-        | - id_insumo
-        | - insumo en categoría Bebidas
-        | - inventario por sucursal
-        |--------------------------------------------------------------------------
-        */
+            $idCategoriaInsumo = DB::table(
+                'categorias_insumos'
+            )
+                ->where(
+                    'id_sucursal',
+                    $idSucursal
+                )
+                ->whereRaw(
+                    'UPPER(nombre) = ?',
+                    ['BEBIDAS']
+                )
+                ->value('id_categoria_insumo');
 
-        $bebidasHuerfanas = DB::table('productos_venta')
-            ->where('tipo_producto', 'BEBIDA')
-            ->where(function ($query) {
-                $query->whereNull('id_insumo')
-                    ->orWhere('prioridad_stock', '!=', 'INVENTARIO');
-            })
-            ->get();
+            if (!$idCategoriaInsumo) {
+                $idCategoriaInsumo = DB::table(
+                    'categorias_insumos'
+                )->insertGetId([
+                    'id_sucursal' => $idSucursal,
+                    'nombre' => 'Bebidas',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
 
-        foreach ($bebidasHuerfanas as $producto) {
-            $this->crearORepararBebida(
-                $producto->nombre,
-                $producto->descripcion ?? 'Bebida registrada en catálogo.',
-                (float) ($producto->precio ?? 0),
-                'UNIDAD',
-                $idCategoriaInsumoBebida,
-                $idCategoriaProductoBebida,
-                $idUserCrea,
-                $sucursales,
-                $producto->id_producto
-            );
+            foreach ($bebidasBase as $bebida) {
+                $this->crearBebidaSucursal(
+                    $idSucursal,
+                    $bebida,
+                    $idCategoriaInsumo,
+                    $idCategoriaProductoBebida,
+                    $idUserCrea
+                );
+            }
         }
     }
 
-    private function crearORepararBebida(
-        string $nombre,
-        ?string $descripcion,
-        float $precio,
-        string $unidadMedida,
-        int $idCategoriaInsumoBebida,
-        int $idCategoriaProductoBebida,
-        int $idUserCrea,
-        $sucursales,
-        ?int $idProductoExistente = null
+    private function crearBebidaSucursal(
+        int $idSucursal,
+        array $bebida,
+        int $idCategoriaInsumo,
+        int $idCategoriaProducto,
+        int $idUserCrea
     ): void {
         $now = now();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Crear o reparar insumo
-        |--------------------------------------------------------------------------
-        */
-
         $idInsumo = DB::table('insumos')
-            ->whereRaw('UPPER(nombre) = ?', [mb_strtoupper($nombre)])
+            ->where(
+                'id_sucursal',
+                $idSucursal
+            )
+            ->whereRaw(
+                'UPPER(nombre) = ?',
+                [mb_strtoupper($bebida['nombre'])]
+            )
             ->value('id_insumo');
 
         if (!$idInsumo) {
             $idInsumo = DB::table('insumos')
                 ->insertGetId([
-                    'nombre' => $nombre,
-                    'unidad_medida' => $unidadMedida ?: 'UNIDAD',
+                    'id_sucursal' => $idSucursal,
+                    'id_categoria_insumo' =>
+                        $idCategoriaInsumo,
+                    'nombre' => $bebida['nombre'],
+                    'unidad_medida' =>
+                        $bebida['unidad_medida'],
                     'prioridad_stock' => 'INVENTARIO',
-                    'id_categoria_insumo' => $idCategoriaInsumoBebida,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ]);
-        } else {
-            DB::table('insumos')
-                ->where('id_insumo', $idInsumo)
-                ->update([
-                    'unidad_medida' => $unidadMedida ?: 'UNIDAD',
-                    'prioridad_stock' => 'INVENTARIO',
-                    'id_categoria_insumo' => $idCategoriaInsumoBebida,
-                    'updated_at' => $now,
-                ]);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Crear o reparar producto de venta
-        |--------------------------------------------------------------------------
-        */
+        DB::table('inventarios')->updateOrInsert(
+            [
+                'id_sucursal' => $idSucursal,
+                'id_insumo' => $idInsumo,
+            ],
+            [
+                'id_user_crea' => $idUserCrea,
+                'stock_actual' => 0,
+                'stock_minimo' => 0,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
 
-        $idProducto = $idProductoExistente;
-
-        if (!$idProducto) {
-            $idProducto = DB::table('productos_venta')
-                ->whereRaw('UPPER(nombre) = ?', [mb_strtoupper($nombre)])
-                ->value('id_producto');
-        }
+        $idProducto = DB::table('productos_venta')
+            ->where(
+                'id_sucursal',
+                $idSucursal
+            )
+            ->whereRaw(
+                'UPPER(nombre) = ?',
+                [mb_strtoupper($bebida['nombre'])]
+            )
+            ->value('id_producto');
 
         $datosProducto = [
-            'nombre' => $nombre,
-            'descripcion' => $descripcion,
-            'precio' => $precio > 0 ? $precio : 1,
+            'id_sucursal' => $idSucursal,
+            'nombre' => $bebida['nombre'],
+            'descripcion' => $bebida['descripcion'],
+            'precio' => $bebida['precio'],
             'tipo_producto' => 'BEBIDA',
             'prioridad_stock' => 'INVENTARIO',
             'consume_carne' => false,
             'consumos_carne' => null,
-            'id_categoria_producto' => $idCategoriaProductoBebida,
+            'id_categoria_producto' =>
+                $idCategoriaProducto,
             'id_insumo' => $idInsumo,
             'updated_at' => $now,
         ];
@@ -221,35 +176,17 @@ class BebidasInventarioSeeder extends Seeder
         if (!$idProducto) {
             $datosProducto['created_at'] = $now;
 
-            DB::table('productos_venta')->insert($datosProducto);
-        } else {
             DB::table('productos_venta')
-                ->where('id_producto', $idProducto)
-                ->update($datosProducto);
+                ->insert($datosProducto);
+
+            return;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Crear inventario por sucursal
-        |--------------------------------------------------------------------------
-        */
-
-        foreach ($sucursales as $sucursal) {
-            $existeInventario = DB::table('inventarios')
-                ->where('id_sucursal', $sucursal->id_sucursal)
-                ->where('id_insumo', $idInsumo)
-                ->exists();
-
-            if (!$existeInventario) {
-                DB::table('inventarios')->insert([
-                    'id_sucursal' => $sucursal->id_sucursal,
-                    'id_insumo' => $idInsumo,
-                    'id_user_crea' => $idUserCrea,
-                    'stock_actual' => 0,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
-            }
-        }
+        DB::table('productos_venta')
+            ->where(
+                'id_producto',
+                $idProducto
+            )
+            ->update($datosProducto);
     }
 }

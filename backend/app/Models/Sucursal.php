@@ -50,4 +50,51 @@ public function reportes()
         'id_sucursal'
     );
 }
+// Inventarios
+
+
+// Solicitudes
+public function solicitudes()
+{
+    return $this->hasMany(
+        Solicitud::class,
+        'id_sucursal',
+        'id_sucursal'
+    );
+}
+public function categoriasInsumos()
+{
+    return $this->hasMany(
+        CategoriaInsumo::class,
+        'id_sucursal',
+        'id_sucursal'
+    );
+}
+
+public function insumos()
+{
+    return $this->hasMany(
+        Insumo::class,
+        'id_sucursal',
+        'id_sucursal'
+    );
+}
+
+public function inventarios()
+{
+    return $this->hasMany(
+        Inventario::class,
+        'id_sucursal',
+        'id_sucursal'
+    );
+}
+
+public function productosVenta()
+{
+    return $this->hasMany(
+        ProductoVenta::class,
+        'id_sucursal',
+        'id_sucursal'
+    );
+}
 }

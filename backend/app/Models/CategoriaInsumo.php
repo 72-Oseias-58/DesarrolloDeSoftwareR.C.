@@ -11,9 +11,18 @@ class CategoriaInsumo extends Model
     protected $primaryKey = 'id_categoria_insumo';
 
     protected $fillable = [
+        'id_sucursal',
         'nombre',
-        'descripcion',
     ];
+
+    public function sucursal()
+    {
+        return $this->belongsTo(
+            Sucursal::class,
+            'id_sucursal',
+            'id_sucursal'
+        );
+    }
 
     public function insumos()
     {

@@ -17,6 +17,8 @@ use App\Http\Controllers\Api\PermisoUsuarioController;
 use App\Http\Controllers\Api\ProductoVentaController;
 use App\Http\Controllers\Api\ReporteController;
 use App\Http\Controllers\Api\SucursalController;
+use App\Http\Controllers\Api\SolicitudController;
+use App\Http\Controllers\Api\PantallaController;
 
 // Autenticación
 Route::post('/login', [AuthController::class, 'login']);
@@ -189,193 +191,311 @@ Route::middleware('auth:api')->group(function () {
         )
             ->whereNumber('id')
             ->middleware('permission:ver_reportes');
+            // Listar solicitudes
+Route::get(
+    '/superadmin/solicitudes',
+    [SolicitudController::class, 'superadminIndex']
+)->middleware('permission:ver_solicitudes');
+
+// Abrir solicitud
+Route::get(
+    '/superadmin/solicitudes/{id}',
+    [SolicitudController::class, 'detalleSuperadmin']
+)
+    ->whereNumber('id')
+    ->middleware('permission:ver_solicitudes');
     });
 
     // ADMIN
     Route::middleware('role:ADMIN')->group(function () {
 
-        // Prueba ADMIN
-        Route::get('/admin/prueba', function () {
-            return response()->json([
-                'message' => 'Ruta exclusiva para ADMIN.',
-            ]);
-        });
-
-        // Listar empleados
-        Route::get(
-            '/empleados',
-            [EmpleadoController::class, 'index']
-        )->middleware('permission:ver_empleados');
-
-        // Crear empleado
-        Route::post(
-            '/empleados',
-            [EmpleadoController::class, 'store']
-        )->middleware('permission:crear_empleados');
-
-        // Ver empleado
-        Route::get(
-            '/empleados/{id}',
-            [EmpleadoController::class, 'show']
-        )
-            ->whereNumber('id')
-            ->middleware('permission:ver_empleados');
-
-        // Editar empleado
-        Route::put(
-            '/empleados/{id}',
-            [EmpleadoController::class, 'update']
-        )
-            ->whereNumber('id')
-            ->middleware('permission:editar_empleados');
-
-        // Cambiar estado de empleado
-        Route::patch(
-            '/empleados/{id}/estado',
-            [EmpleadoController::class, 'cambiarEstado']
-        )
-            ->whereNumber('id')
-            ->middleware('permission:cambiar_estado_empleados');
-
-        // Listar jornadas
-        Route::get(
-            '/jornadas',
-            [JornadaController::class, 'index']
-        )->middleware('permission:ver_jornadas');
-
-        // Listar tipos de carne
-        Route::get(
-            '/jornadas/tipos-carne',
-            [JornadaController::class, 'tiposCarne']
-        )->middleware('permission:ver_jornadas');
-
-        // Abrir jornada
-        Route::post(
-            '/jornadas/abrir',
-            [JornadaController::class, 'abrir']
-        )->middleware('permission:abrir_jornada');
-
-        // Preparar cierre de jornada
-        Route::get(
-            '/jornadas/preparar-cierre',
-            [JornadaController::class, 'prepararCierre']
-        )->middleware('permission:cerrar_jornada');
-
-        // Cerrar jornada
-        Route::patch(
-            '/jornadas/cerrar',
-            [JornadaController::class, 'cerrar']
-        )->middleware('permission:cerrar_jornada');
-
-        // Estadísticas del ADMIN
-        Route::get(
-            '/admin/estadisticas/ventas',
-            [EstadisticaVentaController::class, 'admin']
-        );
-
-        // Listar cajas
-        Route::get(
-            '/cajas',
-            [CajaController::class, 'index']
-        )->middleware('permission:ver_cajas');
-
-        // Listar movimientos de carne
-        Route::get(
-            '/admin/movimientos-carne',
-            [MovimientoCarneController::class, 'index']
-        )->middleware('permission:ver_movimientos_carne');
-
-        // Registrar movimiento de carne
-        Route::post(
-            '/admin/movimientos-carne',
-            [MovimientoCarneController::class, 'store']
-        )->middleware('permission:registrar_movimientos_carne');
-
-        // Obtener opciones del catálogo
-        Route::get(
-            '/catalogo/productos/opciones',
-            [ProductoVentaController::class, 'opciones']
-        )->middleware('permission:ver_catalogo_pedidos');
-
-        // Crear producto
-        Route::post(
-            '/catalogo/productos',
-            [ProductoVentaController::class, 'store']
-        )->middleware('permission:crear_catalogo_pedidos');
-
-        // Editar producto
-        Route::put(
-            '/catalogo/productos/{id}',
-            [ProductoVentaController::class, 'update']
-        )
-            ->whereNumber('id')
-            ->middleware('permission:editar_catalogo_pedidos');
-
-        // Eliminar producto
-        Route::delete(
-            '/catalogo/productos/{id}',
-            [ProductoVentaController::class, 'destroy']
-        )
-            ->whereNumber('id')
-            ->middleware('permission:eliminar_catalogo_pedidos');
-
-        // Opciones de compras internas
-        Route::get(
-            '/admin/compras-internas/opciones',
-            [CompraInternaController::class, 'opciones']
-        )->middleware('permission:ver_compras_internas');
-
-        // Listar compras internas
-        Route::get(
-            '/admin/compras-internas',
-            [CompraInternaController::class, 'index']
-        )->middleware('permission:ver_compras_internas');
-
-        // Registrar compra interna
-        Route::post(
-            '/admin/compras-internas',
-            [CompraInternaController::class, 'store']
-        )->middleware('permission:registrar_compras_internas');
-
-        // Agregar dinero a compra
-        Route::post(
-            '/admin/compras-internas/{id}/dinero-adicional',
-            [CompraInternaController::class, 'agregarDinero']
-        )
-            ->whereNumber('id')
-            ->middleware('permission:registrar_compras_internas');
-
-        // Finalizar compra interna
-        Route::patch(
-            '/admin/compras-internas/{id}/finalizar',
-            [CompraInternaController::class, 'finalizar']
-        )
-            ->whereNumber('id')
-            ->middleware('permission:registrar_compras_internas');
-
-        // Anular compra interna
-        Route::patch(
-            '/admin/compras-internas/{id}/anular',
-            [CompraInternaController::class, 'anular']
-        )
-            ->whereNumber('id')
-            ->middleware('permission:registrar_compras_internas');
-
-        // Listar reportes del ADMIN
-        Route::get(
-            '/admin/reportes-jornada',
-            [ReporteController::class, 'admin']
-        )->middleware('permission:ver_reportes_jornada');
-
-        // Ver reporte del ADMIN
-        Route::get(
-            '/admin/reportes-jornada/{id}',
-            [ReporteController::class, 'detalleAdmin']
-        )
-            ->whereNumber('id')
-            ->middleware('permission:ver_reportes_jornada');
+    // Prueba ADMIN
+    Route::get('/admin/prueba', function () {
+        return response()->json([
+            'message' => 'Ruta exclusiva para ADMIN.',
+        ]);
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | EMPLEADOS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/empleados',
+        [EmpleadoController::class, 'index']
+    )->middleware('permission:ver_empleados');
+
+    Route::post(
+        '/empleados',
+        [EmpleadoController::class, 'store']
+    )->middleware('permission:crear_empleados');
+
+    Route::get(
+        '/empleados/{id}',
+        [EmpleadoController::class, 'show']
+    )
+        ->whereNumber('id')
+        ->middleware('permission:ver_empleados');
+
+    Route::put(
+        '/empleados/{id}',
+        [EmpleadoController::class, 'update']
+    )
+        ->whereNumber('id')
+        ->middleware('permission:editar_empleados');
+
+    Route::patch(
+        '/empleados/{id}/estado',
+        [EmpleadoController::class, 'cambiarEstado']
+    )
+        ->whereNumber('id')
+        ->middleware('permission:cambiar_estado_empleados');
+
+    /*
+    |--------------------------------------------------------------------------
+    | JORNADAS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/jornadas',
+        [JornadaController::class, 'index']
+    )->middleware('permission:ver_jornadas');
+
+    Route::get(
+        '/jornadas/tipos-carne',
+        [JornadaController::class, 'tiposCarne']
+    )->middleware('permission:ver_jornadas');
+
+    Route::post(
+        '/jornadas/abrir',
+        [JornadaController::class, 'abrir']
+    )->middleware('permission:abrir_jornada');
+
+    Route::get(
+        '/jornadas/preparar-cierre',
+        [JornadaController::class, 'prepararCierre']
+    )->middleware('permission:cerrar_jornada');
+
+    Route::patch(
+        '/jornadas/cerrar',
+        [JornadaController::class, 'cerrar']
+    )->middleware('permission:cerrar_jornada');
+
+    /*
+    |--------------------------------------------------------------------------
+    | ESTADÍSTICAS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/admin/estadisticas/ventas',
+        [EstadisticaVentaController::class, 'admin']
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | CAJAS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/cajas',
+        [CajaController::class, 'index']
+    )->middleware('permission:ver_cajas');
+
+    /*
+    |--------------------------------------------------------------------------
+    | MOVIMIENTOS DE CARNE
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/admin/movimientos-carne',
+        [MovimientoCarneController::class, 'index']
+    )->middleware('permission:ver_movimientos_carne');
+
+    Route::post(
+        '/admin/movimientos-carne',
+        [MovimientoCarneController::class, 'store']
+    )->middleware('permission:registrar_movimientos_carne');
+
+    /*
+    |--------------------------------------------------------------------------
+    | CATÁLOGO DE PRODUCTOS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/catalogo/productos/opciones',
+        [ProductoVentaController::class, 'opciones']
+    )->middleware('permission:ver_catalogo_pedidos');
+
+    Route::post(
+        '/catalogo/productos',
+        [ProductoVentaController::class, 'store']
+    )->middleware('permission:crear_catalogo_pedidos');
+
+    Route::put(
+        '/catalogo/productos/{id}',
+        [ProductoVentaController::class, 'update']
+    )
+        ->whereNumber('id')
+        ->middleware('permission:editar_catalogo_pedidos');
+
+    Route::delete(
+        '/catalogo/productos/{id}',
+        [ProductoVentaController::class, 'destroy']
+    )
+        ->whereNumber('id')
+        ->middleware('permission:eliminar_catalogo_pedidos');
+
+    /*
+    |--------------------------------------------------------------------------
+    | COMPRAS INTERNAS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/admin/compras-internas/opciones',
+        [CompraInternaController::class, 'opciones']
+    )->middleware('permission:ver_compras_internas');
+
+    Route::get(
+        '/admin/compras-internas',
+        [CompraInternaController::class, 'index']
+    )->middleware('permission:ver_compras_internas');
+
+    Route::post(
+        '/admin/compras-internas',
+        [CompraInternaController::class, 'store']
+    )->middleware('permission:registrar_compras_internas');
+
+    Route::post(
+        '/admin/compras-internas/{id}/dinero-adicional',
+        [CompraInternaController::class, 'agregarDinero']
+    )
+        ->whereNumber('id')
+        ->middleware('permission:registrar_compras_internas');
+
+    Route::patch(
+        '/admin/compras-internas/{id}/finalizar',
+        [CompraInternaController::class, 'finalizar']
+    )
+        ->whereNumber('id')
+        ->middleware('permission:registrar_compras_internas');
+
+    Route::patch(
+        '/admin/compras-internas/{id}/anular',
+        [CompraInternaController::class, 'anular']
+    )
+        ->whereNumber('id')
+        ->middleware('permission:registrar_compras_internas');
+
+    /*
+    |--------------------------------------------------------------------------
+    | REPORTES DE JORNADA
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/admin/reportes-jornada',
+        [ReporteController::class, 'admin']
+    )->middleware('permission:ver_reportes_jornada');
+
+    Route::get(
+        '/admin/reportes-jornada/{id}',
+        [ReporteController::class, 'detalleAdmin']
+    )
+        ->whereNumber('id')
+        ->middleware('permission:ver_reportes_jornada');
+
+    /*
+    |--------------------------------------------------------------------------
+    | INVENTARIO
+    |--------------------------------------------------------------------------
+    */
+
+    // Historial de movimientos
+    Route::get(
+        '/admin/inventario/movimientos',
+        [InventarioController::class, 'movimientos']
+    )->middleware('permission:ver_inventario');
+
+    // Registrar entrada o salida
+    Route::post(
+        '/admin/inventario/movimientos',
+        [InventarioController::class, 'registrarMovimiento']
+    )->middleware('permission:editar_inventario');
+
+    // Listar inventario de la sucursal
+    Route::get(
+        '/admin/inventario',
+        [InventarioController::class, 'index']
+    )->middleware('permission:ver_inventario');
+
+    // Crear categoría, insumo e inventario
+    Route::post(
+        '/admin/inventario',
+        [InventarioController::class, 'store']
+    )->middleware('permission:crear_inventario');
+    /*
+|--------------------------------------------------------------------------
+| SOLICITUDES
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/admin/solicitudes/opciones',
+    [SolicitudController::class, 'opciones']
+)->middleware('permission:crear_solicitudes');
+
+Route::get(
+    '/admin/solicitudes',
+    [SolicitudController::class, 'adminIndex']
+)->middleware('permission:crear_solicitudes');
+
+Route::post(
+    '/admin/solicitudes',
+    [SolicitudController::class, 'store']
+)->middleware('permission:crear_solicitudes');
+/*
+|--------------------------------------------------------------------------
+| CONFIGURACIÓN DE PANTALLAS
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/admin/pantallas',
+    [PantallaController::class, 'index']
+)->middleware('permission:ver_pantallas');
+
+Route::get(
+    '/admin/pantallas/opciones',
+    [PantallaController::class, 'opciones']
+)->middleware('permission:ver_pantallas');
+
+Route::post(
+    '/admin/pantallas',
+    [PantallaController::class, 'store']
+)->middleware('permission:crear_pantallas');
+
+Route::put(
+    '/admin/pantallas/{id}',
+    [PantallaController::class, 'update']
+)
+    ->whereNumber('id')
+    ->middleware('permission:editar_pantallas');
+
+Route::delete(
+    '/admin/pantallas/{id}',
+    [PantallaController::class, 'destroy']
+)
+    ->whereNumber('id')
+    ->middleware('permission:eliminar_pantallas');
+});
     // CAJERO
     Route::middleware('role:CAJERO')->group(function () {
 

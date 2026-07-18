@@ -30,6 +30,7 @@ class PermisosCatalogoSeeder extends Seeder
                 'slug' => 'eliminar_catalogo_pedidos',
                 'descripcion' => 'Permite eliminar productos sin ventas',
             ],
+            
         ];
 
         $idRolAdmin = DB::table('roles')

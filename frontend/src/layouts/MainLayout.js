@@ -37,6 +37,14 @@ const menuItems = [
     roles: ['SUPERADMIN'],
     permiso: 'ver_reportes',
   },
+  {
+    label: 'Solicitudes',
+    caption: 'Requerimientos de sucursales',
+    icon: 'inbox',
+    to: '/superadmin/solicitudes',
+    roles: ['SUPERADMIN'],
+    permiso: 'ver_solicitudes',
+  },
 
   // ADMIN
   {
@@ -117,6 +125,14 @@ const menuItems = [
     to: '/admin/solicitudes',
     roles: ['ADMIN'],
     permiso: 'crear_solicitudes',
+  },
+  {
+    label: 'Pantallas',
+    caption: 'Configurar áreas y finalización',
+    icon: 'desktop_windows',
+    to: '/admin/pantallas',
+    roles: ['ADMIN'],
+    permiso: 'ver_pantallas',
   },
 
   // CAJERO

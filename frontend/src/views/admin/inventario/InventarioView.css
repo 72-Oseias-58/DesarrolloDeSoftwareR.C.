@@ -18,3 +18,33 @@
   transform: translateY(-3px);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
 }
+
+.filtros-card {
+  border-radius: 16px;
+}
+
+.inventario-dialog {
+  width: 700px;
+  max-width: 95vw;
+  border-radius: 20px;
+}
+
+.historial-dialog {
+  width: 1150px;
+  max-width: 97vw;
+  border-radius: 20px;
+}
+
+:deep(.q-table__container) {
+  overflow-x: auto;
+}
+
+@media (max-width: 600px) {
+  .inventario-page {
+    padding: 8px;
+  }
+
+  .inventario-card {
+    border-radius: 14px;
+  }
+}

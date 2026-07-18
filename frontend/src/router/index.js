@@ -20,6 +20,7 @@ import SolicitudesView from '../views/admin/solicitudes/SolicitudesView.vue'
 import MovimientosCarneView from '../views/admin/movimientos-carne/MovimientosCarneView.vue'
 import CatalogoProductosView from '../views/admin/catalogo-productos/CatalogoProductosView.vue'
 import ComprasInternasView from '../views/admin/compras-internas/ComprasInternasView.vue'
+import PantallasView from '../views/admin/pantallas/PantallasView.vue'
 // cajero views
 import NuevoPedidoView from '../views/cajero/nuevo-pedido/NuevoPedidoView.vue'
 import RegistrarPagoView from '../views/cajero/registrar-pago/RegistrarPagoView.vue'
@@ -27,11 +28,13 @@ import HistorialPedidosView from '../views/cajero/historial-pedidos/HistorialPed
 import ReimprimirTicketView from '../views/cajero/reimprimir-ticket/ReimprimirTicketView.vue'
 import CajaView from '../views/cajero/caja/CajaView.vue'
 import StockBebidasView from '../views/cajero/stock-bebidas/StockBebidasView.vue'
+
 // superadmin views
 import SucursalesView from '../views/superadmin/sucursales/SucursalesView.vue'
 import EstadisticasSucursalView from '../views/superadmin/estadisticas-sucursal/EstadisticasSucursalView.vue'
 import AdministradoresView from '../views/superadmin/administradores/AdministradoresView.vue'
 import ReportesSucursalesView from '../views/superadmin/reportes/ReportesSucursalesView.vue'
+import SolicitudesSuperadminView from '../views/superadmin/solicitudes/SolicitudesSuperadminView.vue'
 
 const obtenerNombreRol = (usuario) => {
   return (
@@ -171,6 +174,15 @@ const routes = [
           permiso: 'ver_reportes',
         },
       },
+      {
+        path: 'solicitudes',
+        name: 'superadmin-solicitudes',
+        component: SolicitudesSuperadminView,
+        meta: {
+          roles: ['SUPERADMIN'],
+          permiso: 'ver_solicitudes',
+        },
+      },
     ],
   },
 
@@ -227,7 +239,7 @@ const routes = [
         component: ReportesView,
         meta: {
           roles: ['ADMIN'],
-          permiso: 'crear_reportes',
+          permiso: 'ver_reportes_jornada',
         },
       },
       {
@@ -282,6 +294,15 @@ const routes = [
         meta: {
           roles: ['ADMIN'],
           permiso: 'ver_movimientos_carne',
+        },
+      },
+      {
+        path: 'pantallas',
+        name: 'admin-pantallas',
+        component: PantallasView,
+        meta: {
+          roles: ['ADMIN'],
+          permiso: 'ver_pantallas',
         },
       },
     ],

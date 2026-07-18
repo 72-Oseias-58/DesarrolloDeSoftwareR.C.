@@ -23,6 +23,35 @@ class User extends Authenticatable implements JWTSubject
         'password',
         'remember_token',
     ];
+    // Solicitudes creadas
+public function solicitudesCreadas()
+{
+    return $this->hasMany(
+        Solicitud::class,
+        'id_user_solicita',
+        'id'
+    );
+}
+
+// Solicitudes leídas
+public function solicitudesLeidas()
+{
+    return $this->hasMany(
+        Solicitud::class,
+        'id_user_visto',
+        'id'
+    );
+}
+
+// Inventarios creados
+public function inventariosCreados()
+{
+    return $this->hasMany(
+        Inventario::class,
+        'id_user_crea',
+        'id'
+    );
+}
 
     protected function casts(): array
     {

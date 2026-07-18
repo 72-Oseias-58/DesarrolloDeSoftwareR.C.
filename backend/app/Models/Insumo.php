@@ -11,11 +11,21 @@ class Insumo extends Model
     protected $primaryKey = 'id_insumo';
 
     protected $fillable = [
+        'id_sucursal',
+        'id_categoria_insumo',
         'nombre',
         'unidad_medida',
         'prioridad_stock',
-        'id_categoria_insumo',
     ];
+
+    public function sucursal()
+    {
+        return $this->belongsTo(
+            Sucursal::class,
+            'id_sucursal',
+            'id_sucursal'
+        );
+    }
 
     public function categoria()
     {
@@ -35,10 +45,28 @@ class Insumo extends Model
         );
     }
 
+    public function inventario()
+    {
+        return $this->hasOne(
+            Inventario::class,
+            'id_insumo',
+            'id_insumo'
+        );
+    }
+
     public function productosVenta()
     {
         return $this->hasMany(
             ProductoVenta::class,
+            'id_insumo',
+            'id_insumo'
+        );
+    }
+
+    public function movimientos()
+    {
+        return $this->hasMany(
+            MovimientoInventario::class,
             'id_insumo',
             'id_insumo'
         );

@@ -33,6 +33,8 @@ class DatabaseSeeder extends Seeder
             BebidasInventarioSeeder::class,
             CatalogoPedidoSeeder::class,
             RepararConsumosProductosVentaSeeder::class,
+            AreasPreparacionSeeder::class,
+
         ]);
     }
 }

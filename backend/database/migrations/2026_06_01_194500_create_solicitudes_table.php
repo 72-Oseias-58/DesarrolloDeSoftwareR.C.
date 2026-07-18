@@ -14,11 +14,51 @@ return new class extends Migration
             $table->unsignedBigInteger('id_sucursal');
             $table->unsignedBigInteger('id_user_solicita');
 
-            $table->dateTime('fecha')->nullable();
-            $table->string('mensaje', 255)->nullable();
+            $table->string(
+                'tipo',
+                50
+            );
 
-            $table->dateTime('created_at')->nullable()->useCurrent();
-            $table->dateTime('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
+            $table->string(
+                'asunto',
+                150
+            );
+
+            $table->text(
+                'descripcion'
+            )->nullable();
+
+            /*
+             * Guarda varios insumos en solicitudes de reposición.
+             */
+            $table->json(
+                'detalles_inventario'
+            )->nullable();
+
+            $table->boolean(
+                'visto'
+            )->default(false);
+
+            $table->dateTime(
+                'visto_en'
+            )->nullable();
+
+            $table->unsignedBigInteger(
+                'id_user_visto'
+            )->nullable();
+
+            $table->dateTime(
+                'fecha'
+            )->useCurrent();
+
+            $table->dateTime('created_at')
+                ->nullable()
+                ->useCurrent();
+
+            $table->dateTime('updated_at')
+                ->nullable()
+                ->useCurrent()
+                ->useCurrentOnUpdate();
 
             $table->foreign('id_sucursal')
                 ->references('id_sucursal')
@@ -31,6 +71,28 @@ return new class extends Migration
                 ->on('users')
                 ->onUpdate('cascade')
                 ->onDelete('restrict');
+
+            $table->foreign('id_user_visto')
+                ->references('id')
+                ->on('users')
+                ->onUpdate('cascade')
+                ->onDelete('set null');
+
+            $table->index(
+                [
+                    'id_sucursal',
+                    'fecha',
+                ],
+                'solicitudes_sucursal_fecha_idx'
+            );
+
+            $table->index(
+                [
+                    'visto',
+                    'fecha',
+                ],
+                'solicitudes_visto_fecha_idx'
+            );
         });
     }
 
